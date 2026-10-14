@@ -1,12 +1,12 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=1";
-import { onboarded, profile, setRec, store, syncNow, update } from "./store.js?v=1";
-import { $, $$, celebrate, toast } from "./ui.js?v=1";
-import { renderSession, renderToday } from "./view-today.js?v=1";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=1";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=1";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=1";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=1";
+import { pad, reducedMotion } from "./util.js?v=2";
+import { onboarded, profile, setRec, store, syncNow, update } from "./store.js?v=2";
+import { $, $$, celebrate, toast } from "./ui.js?v=2";
+import { renderSession, renderToday } from "./view-today.js?v=2";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=2";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=2";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=2";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=2";
 
 const ROUTES = {
   "": renderToday,

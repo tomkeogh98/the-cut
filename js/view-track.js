@@ -1,16 +1,16 @@
 // Timeline (tracker), Scope (weight), Rushes (photos) and Dailies (journal).
-import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=1";
-import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=1";
-import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=1";
-import { lineChart, sparkline } from "./chart.js?v=1";
-import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=1";
-import { weightMilestones } from "./goals.js?v=1";
-import { SESSIONS } from "./program.js?v=1";
-import { pushWeight } from "./hevy.js?v=1";
+import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=2";
+import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=2";
+import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=2";
+import { lineChart, sparkline } from "./chart.js?v=2";
+import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=2";
+import { weightMilestones } from "./goals.js?v=2";
+import { SESSIONS } from "./program.js?v=2";
+import { pushWeight } from "./hevy.js?v=2";
 import {
   dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, REASONS, scheduledType, sessionsOn, shiftCheck, shiftFrom, shiftInto,
   slackReport, streak, trainedOn, typeOn, weekSummary,
-} from "./schedule.js?v=1";
+} from "./schedule.js?v=2";
 
 const STATUS_LABEL = {
   done: "Trained", off: "Not scheduled", missed: "Missed", broken: "Missed (rule broken)", moved: "Moved",
@@ -271,7 +271,7 @@ export function photoDialog(date = today(), onDone) {
         const first = !Object.values(store.state.photos).some(live);
         setRec("photos", id, { id, date: d, pose: f.get("pose"), name, uploaded: false, deleted: false });
         dlg.close();
-        if (first) celebrate("First frame of the reel", "In twelve weeks you'll be glad you took this.");
+        if (first) toast("First frame of the reel. In twelve weeks you'll be glad you took this.");
         else toast("Added to the reel.");
         onDone?.();
       } catch (err) {

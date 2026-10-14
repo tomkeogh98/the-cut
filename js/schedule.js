@@ -1,7 +1,7 @@
 // The rules: which days are scheduled, what counts as done, moves, excuses, and the slacking check.
 // scripts/nudge.py in the-cut-data mirrors dayStatus/weekSummary/nudgeCheck. Keep them in sync.
-import { addDays, daysBetween, isWeekend, live, mondayOf, today, weekday } from "./util.js?v=1";
-import { plannedType, SESSIONS } from "./program.js?v=1";
+import { addDays, daysBetween, isWeekend, live, mondayOf, today, weekday } from "./util.js?v=2";
+import { plannedType, SESSIONS } from "./program.js?v=2";
 
 export const REASONS = {
   sick: { label: "Sick", mark: "S" },

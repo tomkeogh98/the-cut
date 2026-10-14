@@ -1,7 +1,7 @@
 // State lives in localStorage (works offline) and syncs to data.json in a private GitHub repo.
 // Progress photos are cached in IndexedDB and uploaded to photos/ in the same repo.
-import { today } from "./util.js?v=1";
-import { DEFAULT_PROFILE } from "./body.js?v=1";
+import { today } from "./util.js?v=2";
+import { DEFAULT_PROFILE } from "./body.js?v=2";
 
 const STATE_KEY = "cut.state.v1";
 const SETTINGS_KEY = "cut.settings.v1";
@@ -169,14 +169,14 @@ const fromB64Text = (b64) => new TextDecoder().decode(Uint8Array.from(atob(b64.r
 let remoteSha = null;
 
 async function pull() {
-  const res = await gh(`contents/data.json?ref=main&t=${Date.now()}`);
+  const res = await gh(`contents/data.json?t=${Date.now()}`);
   if (res.status === 404) { remoteSha = null; return null; }
   if (!res.ok) throw new Error(await errText(res));
   const body = await res.json();
   remoteSha = body.sha;
   // Files over 1 MB come back without inline content; fetch the raw blob instead.
   if (!body.content && body.git_url) {
-    const raw = await gh(`contents/data.json?ref=main&t=${Date.now()}`, { headers: { Accept: "application/vnd.github.raw" } });
+    const raw = await gh(`contents/data.json?t=${Date.now()}`, { headers: { Accept: "application/vnd.github.raw" } });
     if (!raw.ok) throw new Error(await errText(raw));
     return JSON.parse(await raw.text());
   }

@@ -1,10 +1,10 @@
 // Shared view helpers: the "now" context, dialogs, toasts, celebrations and nudge copy.
-import { addDays, daysBetween, esc, pickRandom, reducedMotion, today, weekday } from "./util.js?v=1";
-import { profile, store } from "./store.js?v=1";
-import { weightStatus } from "./goals.js?v=1";
-import { seasonInfo, SESSIONS } from "./program.js?v=1";
-import { dayStatus, perfectStreak, scheduledType, streak, trainedOn, typeOn } from "./schedule.js?v=1";
-import { isBirthday, age } from "./body.js?v=1";
+import { addDays, daysBetween, esc, pickRandom, reducedMotion, today, weekday } from "./util.js?v=2";
+import { profile, store } from "./store.js?v=2";
+import { weightStatus } from "./goals.js?v=2";
+import { seasonInfo, SESSIONS } from "./program.js?v=2";
+import { dayStatus, perfectStreak, scheduledType, streak, trainedOn, typeOn } from "./schedule.js?v=2";
+import { isBirthday, age } from "./body.js?v=2";
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -55,6 +55,7 @@ export function modal(html, onMount) {
 
 // ---------- "that's a wrap" ----------
 export function celebrate(title, sub = "") {
+  document.querySelectorAll(".wrap-overlay").forEach((x) => x.remove()); // one celebration at a time
   const o = document.createElement("div");
   o.className = "wrap-overlay";
   o.setAttribute("role", "alert");
