@@ -1,16 +1,16 @@
 // Timeline (tracker), Scope (weight), Rushes (photos) and Dailies (journal).
-import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=3";
-import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=3";
-import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=3";
-import { lineChart, sparkline } from "./chart.js?v=3";
-import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=3";
-import { weightMilestones } from "./goals.js?v=3";
-import { SESSIONS } from "./program.js?v=3";
-import { pushWeight } from "./hevy.js?v=3";
+import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=4";
+import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=4";
+import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=4";
+import { lineChart, sparkline } from "./chart.js?v=4";
+import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=4";
+import { weightMilestones } from "./goals.js?v=4";
+import { SESSIONS } from "./program.js?v=4";
+import { pushWeight } from "./hevy.js?v=4";
 import {
   dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, REASONS, scheduledType, sessionsOn, shiftCheck, shiftFrom, shiftInto,
   slackReport, streak, trainedOn, typeOn, weekSummary,
-} from "./schedule.js?v=3";
+} from "./schedule.js?v=4";
 
 const STATUS_LABEL = {
   done: "Trained", off: "Not scheduled", missed: "Missed", broken: "Missed (rule broken)", moved: "Moved",

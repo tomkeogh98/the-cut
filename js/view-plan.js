@@ -1,15 +1,15 @@
 // The Script (goals), Craft services (meals), the Programme (+ Hevy) and the Production office (settings).
-import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=3";
-import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=3";
-import { $, $$, context, toast } from "./ui.js?v=3";
-import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=3";
-import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=3";
-import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=3";
-import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=3";
-import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=3";
-import { scheduledType } from "./schedule.js?v=3";
-import { hevySyncNow } from "./app.js?v=3";
-import { devicesCard, wireDevices } from "./devices.js?v=3";
+import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=4";
+import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=4";
+import { $, $$, context, toast } from "./ui.js?v=4";
+import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=4";
+import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=4";
+import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=4";
+import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=4";
+import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=4";
+import { scheduledType } from "./schedule.js?v=4";
+import { hevySyncNow } from "./app.js?v=4";
+import { devicesCard, wireDevices } from "./devices.js?v=4";
 
 // ================= THE SCRIPT (goals) =================
 export function renderScript(view) {
@@ -122,11 +122,18 @@ function setMeal(date, slot, id) {
   update((s) => { s.meals[date] = stamp({ ...(s.meals[date] || {}), [slot]: id }); });
 }
 
+// Share of calories from protein / carbs / fat, as one stacked bar.
+function macroBar(m) {
+  const p = m.p * 4, c = m.c * 4, f = m.f * 9, t = p + c + f || 1;
+  return `<div class="macro-bar" role="img" aria-label="Calories: ${Math.round((p / t) * 100)}% protein, ${Math.round((c / t) * 100)}% carbs, ${Math.round((f / t) * 100)}% fat"><i class="k-p" style="flex:${p}"></i><i class="k-c" style="flex:${c}"></i><i class="k-f" style="flex:${f}"></i></div>`;
+}
+
 function mealCard(meal, slot, browse = false) {
   return `<article class="meal">
     <header><span class="m-slot">${esc(slot.name)}</span><span class="m-time tc">${meal.mins ? `${meal.mins} min` : "0 min"}</span></header>
     <h3>${esc(meal.name)}</h3>
-    <p class="m-macros"><b>${meal.kcal}</b> kcal · <b>${meal.p}</b>P · ${meal.c}C · ${meal.f}F</p>
+    <p class="m-macros"><b>${meal.kcal}</b> kcal <span><i class="k-p"></i>${meal.p}g P</span> <span><i class="k-c"></i>${meal.c}g C</span> <span><i class="k-f"></i>${meal.f}g F</span></p>
+    ${macroBar(meal)}
     <ul class="m-ing">${meal.items.map((it) => `<li>${esc(portion(it))}</li>`).join("")}</ul>
     <p class="m-method">${esc(meal.method)}</p>
     <p class="m-tags">${meal.tags.map((t) => `<span>${esc(t)}</span>`).join("")}</p>
@@ -148,7 +155,7 @@ export function renderProgram(view) {
     <section class="week-plan">${[1, 2, 3, 4, 5, 6, 0].map((wd) => {
       const t = DEFAULT_WEEK[wd] || "rest";
       const s = SESSIONS[t];
-      return `<a class="wp-day${t === "rest" ? " rest" : ""}" ${s.exercises.length ? `href="#/session/${t}"` : ""}><span class="wp-wd">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][wd]}</span><b>${esc(s.name)}</b><small>${esc(s.tag)}</small></a>`;
+      return `<a class="wp-day${t === "rest" ? " rest" : ""}${wd === new Date().getDay() ? " now" : ""}" ${s.exercises.length ? `href="#/session/${t}"` : ""}><span class="wp-wd">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][wd]}${wd === new Date().getDay() ? " · today" : ""}</span><b>${esc(s.name)}</b><small>${esc(s.tag)}</small></a>`;
     }).join("")}</section>
     <section class="card">
       <h2 class="sec"><span>Seasons</span> <small>you're in season ${season.season}, week ${season.week}</small></h2>

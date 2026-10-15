@@ -1,10 +1,10 @@
 // Shared view helpers: the "now" context, dialogs, toasts, celebrations and nudge copy.
-import { addDays, daysBetween, esc, pickRandom, reducedMotion, today, weekday } from "./util.js?v=3";
-import { profile, store } from "./store.js?v=3";
-import { weightStatus } from "./goals.js?v=3";
-import { seasonInfo, SESSIONS } from "./program.js?v=3";
-import { dayStatus, perfectStreak, scheduledType, streak, trainedOn, typeOn } from "./schedule.js?v=3";
-import { isBirthday, age } from "./body.js?v=3";
+import { addDays, daysBetween, esc, pickRandom, reducedMotion, today, weekday } from "./util.js?v=4";
+import { profile, store } from "./store.js?v=4";
+import { weightStatus } from "./goals.js?v=4";
+import { seasonInfo, SESSIONS } from "./program.js?v=4";
+import { dayStatus, perfectStreak, scheduledType, streak, trainedOn, typeOn } from "./schedule.js?v=4";
+import { isBirthday, age } from "./body.js?v=4";
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -53,6 +53,25 @@ export function modal(html, onMount) {
   return d;
 }
 
+// ---------- entrance: sections slide in, big numbers count up (on navigation only) ----------
+export function enter(view) {
+  view.classList.remove("enter");
+  void view.offsetWidth; // restart the CSS animation
+  view.classList.add("enter");
+  if (reducedMotion()) return;
+  view.querySelectorAll("[data-count]").forEach((el) => {
+    const end = parseFloat(el.dataset.count), dp = Number(el.dataset.dp || 0);
+    if (!Number.isFinite(end) || end === 0) return;
+    const t0 = performance.now(), dur = 1000;
+    const step = (t) => {
+      const k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = (end * e).toFixed(dp);
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  });
+}
+
 // ---------- "that's a wrap" ----------
 export function celebrate(title, sub = "") {
   document.querySelectorAll(".wrap-overlay").forEach((x) => x.remove()); // one celebration at a time
@@ -60,10 +79,11 @@ export function celebrate(title, sub = "") {
   o.className = "wrap-overlay";
   o.setAttribute("role", "alert");
   o.innerHTML = `
-    <div class="clap" aria-hidden="true"><div class="clap-top"></div><div class="clap-body"><span>THE CUT</span><span>MILESTONE</span></div></div>
+    <div class="wrap-bars" aria-hidden="true"><i></i><i></i></div>
+    <p class="wrap-eyebrow"><span class="rec" aria-hidden="true"></span> That's a wrap</p>
     <p class="wrap-title">${esc(title)}</p>
     ${sub ? `<p class="wrap-sub">${esc(sub)}</p>` : ""}
-    <p class="wrap-hint">That's a wrap · tap to continue</p>`;
+    <p class="wrap-hint">Tap to continue</p>`;
   if (!reducedMotion()) {
     for (let i = 0; i < 70; i++) {
       const c = document.createElement("i");

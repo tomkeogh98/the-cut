@@ -1,12 +1,12 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=3";
-import { configured, connectDevice, onboarded, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=3";
-import { $, $$, celebrate, modal, toast } from "./ui.js?v=3";
-import { renderSession, renderToday } from "./view-today.js?v=3";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=3";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=3";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=3";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=3";
+import { pad, reducedMotion } from "./util.js?v=4";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=4";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=4";
+import { renderSession, renderToday } from "./view-today.js?v=4";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=4";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=4";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=4";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=4";
 
 const ROUTES = {
   "": renderToday,
@@ -47,6 +47,7 @@ function route() {
 
 function navigate() {
   route();
+  enter(view);
   window.scrollTo(0, 0);
   view.focus({ preventScroll: true });
 }
@@ -210,6 +211,7 @@ setInterval(() => { if (new Date().toDateString() !== lastDay) { lastDay = new D
 clock();
 drawSync();
 route();
+enter(view);
 syncNow();
 hevySyncNow();
-window.__cut = { store, setRec }; // handy for debugging in the console
+window.__cut = { store, setRec, syncNow, pairLink }; // handy for debugging in the console

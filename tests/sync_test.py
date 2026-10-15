@@ -135,7 +135,7 @@ with sync_playwright() as p:
     a.wait_for_selector("#copyLink", timeout=5000)
     wait_synced(a)
     check(all(ph.get("uploaded") for ph in state(a)["photos"].values()), "A: photo uploaded")
-    link = a.evaluate("() => navigator.clipboard ? null : null") or a.evaluate("() => import('/js/store.js?v=3').then(m => m.pairLink())")
+    link = a.evaluate("() => navigator.clipboard ? null : null") or a.evaluate("() => window.__cut.pairLink()")
     check("#/pair/" in link, "A: setup link generated")
     a.click("#showQr")
     a.wait_for_selector("#qr svg", timeout=15000)
@@ -149,7 +149,7 @@ with sync_playwright() as p:
     bp.fill(".join input[name=token]", TOKEN)
     bp.evaluate(f"() => document.querySelector('.join input[name=repo]').value = {REPO!r}")
     bp.click(".join button.primary")
-    bp.wait_for_selector(".titlecard .greet", timeout=30000)
+    bp.wait_for_selector(".hero .hero-title", timeout=30000)
     bp.wait_for_selector(".the-list", timeout=30000)
     check(bp.locator("#cast").count() == 0, "B: skipped onboarding after connecting")
     sb = state(bp)
@@ -181,7 +181,7 @@ with sync_playwright() as p:
 
     # ---- back on A: pulls B's guitar tick ----
     a.goto(base + "/#/")
-    a.evaluate("() => import('/js/store.js?v=3').then(m => m.syncNow())")
+    a.evaluate("() => window.__cut.syncNow()")
     wait_synced(a)
     check(state(a)["checks"].get(TODAY, {}).get("guitar") is True, "A: picked up B's guitar tick")
 

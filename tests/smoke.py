@@ -136,8 +136,8 @@ with sync_playwright() as p:
     page.wait_for_selector(".wrap-overlay")
     page.screenshot(path=f"{OUT}/onboard-celebrate.png")
     close_overlays(page)
-    page.wait_for_selector(".titlecard .greet")
-    print("greeting:", page.inner_text(".greet"), "|", page.inner_text(".greet-sub"))
+    page.wait_for_selector(".hero .hero-title")
+    print("greeting:", page.inner_text(".hero-title"), "|", page.inner_text(".hero-sub"))
     page.screenshot(path=f"{OUT}/day-one.png", full_page=True)
 
     # water + toggles + journal
@@ -159,7 +159,7 @@ with sync_playwright() as p:
     seeded = seed()
     page.evaluate("s => { localStorage.setItem('cut.state.v1', JSON.stringify(s)); localStorage.removeItem('cut.greet.recent'); }", seeded)
     page.reload()
-    page.wait_for_selector(".titlecard")
+    page.wait_for_selector(".hero")
     close_overlays(page)
     page.wait_for_timeout(200)
     close_overlays(page)
@@ -266,7 +266,7 @@ with sync_playwright() as p:
     }""")
     page.goto(BASE + "/#/")
     page.reload()
-    page.wait_for_selector(".titlecard")
+    page.wait_for_selector(".hero")
     close_overlays(page)
     assert page.locator(".directors-note").count() == 1, "slacking should trigger the director's note"
     print("NUDGE:", page.inner_text(".directors-note").replace("\n", " "))

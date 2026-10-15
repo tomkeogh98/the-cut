@@ -1,17 +1,17 @@
 // Today (the call sheet), the session page, and first-run onboarding (the casting sheet).
-import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=3";
-import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=3";
-import { connectForm, wireConnectForm } from "./devices.js?v=3";
-import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=3";
-import { pickGreeting } from "./greetings.js?v=3";
-import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=3";
+import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=4";
+import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=4";
+import { connectForm, wireConnectForm } from "./devices.js?v=4";
+import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=4";
+import { pickGreeting } from "./greetings.js?v=4";
+import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=4";
 import {
   buildFrom, dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, nudgeCheck, previousDay, scheduledType, shiftFrom, shiftInto,
   trainedOn, typeOn, WATER_GOAL, weekSummary,
-} from "./schedule.js?v=3";
-import { lastPerformance } from "./hevy.js?v=3";
-import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=3";
-import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=3";
+} from "./schedule.js?v=4";
+import { lastPerformance } from "./hevy.js?v=4";
+import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=4";
+import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=4";
 
 let greeting = null; // one greeting per page load, so ticking boxes doesn't reshuffle it
 
@@ -32,76 +32,72 @@ export function renderToday(view) {
   const t = targets(p, c.ws.current, now);
   const season = c.season;
 
+  const trained = trainedOn(s, now);
+  const scheduled = scheduledType(s, now) != null;
+  const left = chk.core.length - chk.done;
+  const lifting = sess.exercises.length > 0;
+  const cta = trained
+    ? `<span class="in-can">In the can ✓</span>${lifting ? ` <a class="btn ghost" href="#/session/${type}">Review the plan</a>` : ""}`
+    : lifting && scheduled ? `<a class="btn primary big" href="#/session/${type}">Start ${esc(sess.name)} <span aria-hidden="true">→</span></a> <button class="btn ghost" data-act="cant">Can't today?</button>`
+    : type === "run" && scheduled ? `<button class="btn primary big" data-act="logtrain">Log run club ✓</button> <button class="btn ghost" data-act="cant">Can't today?</button>`
+    : `<a class="btn ghost" href="#/scope">Check the scope</a>`;
+
   view.innerHTML = `
-    <section class="titlecard">
-      <div class="clapper" aria-hidden="true"></div>
-      <div class="slate">
-        <dl class="slate-fields">
-          <div><dt>Prod.</dt><dd>The Cut</dd></div>
-          <div><dt>Season</dt><dd>${String(season.season).padStart(2, "0")}</dd></div>
-          <div><dt>Ep.</dt><dd>${c.ep}</dd></div>
-          <div><dt>Scene</dt><dd>${esc(sess.code)}</dd></div>
-          <div><dt>Date</dt><dd>${shortDate(now)}</dd></div>
-        </dl>
-        <h1 class="greet">${esc(greeting.h)}</h1>
-        <p class="greet-sub">${esc(greeting.s)}</p>
+    <section class="hero">
+      <div class="hero-mark" aria-hidden="true">${esc(sess.name)}</div>
+      <p class="hero-meta"><span class="rec" aria-hidden="true"></span><span>S${String(season.season).padStart(2, "0")} · EP ${c.ep}</span><span>Week ${season.week}/12 · ${esc(season.phase.name)}</span><span>${prettyDate(now)}</span></p>
+      <h1 class="hero-title">${esc(greeting.h)}</h1>
+      <p class="hero-sub">${esc(greeting.s)}</p>
+      <div class="hero-row">
+        <div class="scene">
+          <p class="eyebrow">Today's scene ${moved ? "· moved" : ""}</p>
+          <p class="scene-name">${esc(sess.name)}</p>
+          <p class="scene-tag">${esc(sess.tag)}${lifting ? ` · ${esc(season.phase.rir)}` : ""}</p>
+          ${moved ? `<p class="note">Today's ${esc(SESSIONS[plannedType(now)].name)} moved to ${prettyDate(moved.to)}. Keep the list going.</p>` : ""}
+          ${into ? `<p class="note">Moved here from ${prettyDate(into[0])}.</p>` : ""}
+          ${lock ? `<p class="note warn">Locked in: you moved yesterday's session, so today can't be skipped.</p>` : ""}
+          <div class="scene-cta">${cta}</div>
+        </div>
+        ${ring(chk.done, chk.core.length, chk.perfect ? "Perfect day" : left === 1 ? "One to go" : `${left} to go`)}
       </div>
+      <dl class="hero-stats">
+        <div><dt>Streak</dt><dd><b data-count="${c.streak}">${c.streak}</b><small>days</small></dd></div>
+        <div><dt>This week</dt><dd><b data-count="${wk.trained}">${wk.trained}</b><small>/ ${wk.required}</small></dd></div>
+        <div><dt>${c.ws.current != null && c.ws.current > p.goalKg ? "To lose" : "To go"}</dt><dd><b data-count="${c.togo ?? 0}" data-dp="1">${c.togo ?? "—"}</b><small>kg</small></dd></div>
+        <div><dt>Perfect run</dt><dd><b data-count="${c.perfect}">${c.perfect}</b><small>/ 75</small></dd></div>
+      </dl>
     </section>
 
     ${nudge ? `<aside class="directors-note" role="note">
       <p class="dn-head">Director's note</p>
       <p class="dn-body">${esc(nudgeText(nudge))}</p>
-      <p class="dn-why"><span>Remember why we started:</span> “${esc(p.why)}”</p>
+      <p class="dn-why"><span>Remember why we started</span>“${esc(p.why)}”</p>
     </aside>` : ""}
 
+    <section class="brief panel">
+      <h2 class="sec">The story so far <small>${prettyDate(now)}</small></h2>
+      <ol class="brief-cols">
+        <li class="b-col">
+          <p class="b-label"><i>01</i> Previously</p>
+          <p>${previouslyText(prev)}</p>
+        </li>
+        <li class="b-col b-today">
+          <p class="b-label"><i>02</i> Today</p>
+          <p><b>${esc(sess.name)}.</b> ${type === "rest" ? esc(sess.focus[0].toUpperCase() + sess.focus.slice(1)) + "." : `About ${esc(sess.focus)}.`}</p>
+        </li>
+        <li class="b-col">
+          <p class="b-label"><i>03</i> How it builds</p>
+          <p>${esc(buildsOn(buildFrom(prev, type), type))}</p>
+        </li>
+      </ol>
+      <blockquote class="camera"><span>On camera</span>${esc(sess.camera)}</blockquote>
+      ${lifting ? hevyAims(sess, season) : ""}
+      ${sess.notes ? `<details class="tips"><summary>${type === "run" ? "Run-club tips" : "Recovery tips"}</summary><ul class="notes">${sess.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}
+    </section>
+
     <div class="today-grid">
-      <section class="brief card">
-        <h2 class="sec"><span>Call sheet</span> <small>${prettyDate(now)} · Week ${season.week}/12 · ${esc(season.phase.name)}</small></h2>
-        <div class="brief-cols">
-          <div class="b-col">
-            <p class="b-label">Previously</p>
-            <p>${previouslyText(prev)}</p>
-          </div>
-          <div class="b-col b-today">
-            <p class="b-label">Today</p>
-            ${moved ? `<p><b>Today's ${esc(SESSIONS[plannedType(now)].name)} was moved to ${prettyDate(moved.to)}.</b> Keep the list going.</p>` : ""}
-            <p class="b-session"><span class="code">${esc(sess.code)}</span> ${esc(sess.name)}<small>${esc(sess.tag)}</small></p>
-            <p>${type === "rest" ? esc(sess.focus[0].toUpperCase() + sess.focus.slice(1)) + "." : `About ${esc(sess.focus)}.`} ${type !== "rest" && type !== "run" ? `Effort: ${esc(season.phase.rir)}.` : ""}</p>
-            ${into ? `<p class="note">Moved here from ${prettyDate(into[0])}.</p>` : ""}
-            ${lock ? `<p class="note warn">Locked in: you moved yesterday's session, so today can't be skipped.</p>` : ""}
-          </div>
-          <div class="b-col">
-            <p class="b-label">How it builds</p>
-            <p>${esc(buildsOn(buildFrom(prev, type), type))}</p>
-          </div>
-        </div>
-        <p class="camera"><span>On camera:</span> ${esc(sess.camera)}</p>
-        ${sess.exercises.length ? hevyAims(sess, season) : ""}
-        ${sess.notes ? `<details class="tips"><summary>${type === "run" ? "Run-club tips" : "Recovery tips"}</summary><ul class="notes">${sess.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}
-        ${sess.exercises.length ? `<a class="btn" href="#/session/${type}">Open the full ${esc(sess.name)} plan →</a>` : ""}
-      </section>
-
-      <aside class="side">
-        <section class="card week">
-          <h2 class="sec"><span>This week</span> <small>${wk.trained}/${wk.required}</small></h2>
-          <div class="week-strip">${Array.from({ length: 7 }, (_, i) => {
-            const d = addDays(mondayOf(now), i);
-            const st = dayStatus(s, d, now);
-            const ty = trainedOn(s, d) ? typeOn(s, d) : scheduledType(s, d);
-            return `<button class="wd st-${st}${d === now ? " is-today" : ""}" data-date="${d}" aria-label="${prettyDate(d)}: ${st}"><span>${shortDay(d)[0]}</span><b>${shiftFrom(s, d) ? "→" : ty ? SESSIONS[ty].code : "·"}</b></button>`;
-          }).join("")}</div>
-        </section>
-        <section class="stats-mini">
-          <div><span class="label">Streak</span><b>${c.streak}</b></div>
-          <div><span class="label">Perfect days</span><b>${c.perfect}<small>/75</small></b></div>
-          <div><span class="label">${c.ws.current != null && c.ws.current > p.goalKg ? "To lose" : "To go"}</span><b>${c.togo ?? "—"}<small> kg</small></b></div>
-          <div><span class="label">Fuel</span><b>${t.kcal}<small> kcal</small></b></div>
-        </section>
-      </aside>
-    </div>
-
-    <section class="the-list card">
-      <h2 class="sec"><span>The list</span> <small>${chk.done}/${chk.core.length} done${chk.perfect ? " · PERFECT DAY" : ""}</small></h2>
+    <section class="the-list panel">
+      <h2 class="sec">The list <small>${chk.done} of ${chk.core.length}${chk.perfect ? " · perfect day" : ""}</small></h2>
       <div class="items">
         ${chk.items.train !== null ? item("train", chk.items.train, "Train", trainLine(s, now, type), trainedOn(s, now) ? "" : `<button class="btn primary" data-act="logtrain">Mark ${esc(sess.name)} done</button> <button class="btn ghost" data-act="cant">Can't today?</button>`) : item("train", true, "Rest day", "Nothing scheduled. An easy walk counts as bonus footage.", "")}
         ${item("water", chk.items.water, "4 L water", `${(chk.water / 1000).toFixed(2)} L of 4 L`, `<div class="water" role="group" aria-label="Water: tap a glass">${Array.from({ length: WATER_GOAL / 250 }, (_, i) => `<button class="glass${(i + 1) * 250 <= chk.water ? " full" : ""}" data-water="${(i + 1) * 250}" aria-label="${((i + 1) * 0.25).toFixed(2)} litres"></button>`).join("")}</div>`)}
@@ -112,9 +108,26 @@ export function renderToday(view) {
         ${chk.items.photo !== null ? item("photo", chk.items.photo, "Progress photo", "Front, side, back. Same spot, same light.", `<button class="btn ghost" data-act="photo">Shoot rushes</button>`) : ""}
       </div>
     </section>
+    <aside class="side">
+      <section class="panel week">
+        <h2 class="sec">This week <small>${wk.trained} of ${wk.required}</small></h2>
+        <div class="week-strip">${Array.from({ length: 7 }, (_, i) => {
+          const d = addDays(mondayOf(now), i);
+          const st = dayStatus(s, d, now);
+          const ty = trainedOn(s, d) ? typeOn(s, d) : scheduledType(s, d);
+          return `<button class="wd st-${st}${d === now ? " is-today" : ""}" data-date="${d}" aria-label="${prettyDate(d)}: ${st}"><span>${shortDay(d).slice(0, 2)}</span><b>${shiftFrom(s, d) ? "→" : ty ? SESSIONS[ty].code : "·"}</b></button>`;
+        }).join("")}</div>
+      </section>
+      <a class="panel fuel" href="#/craft">
+        <span class="eyebrow">Fuel today</span>
+        <b>${t.kcal.toLocaleString()}<small> kcal</small></b>
+        <span class="fine">${t.protein} g protein · ${esc(PHASE_LABEL[t.phase] || "")} · see the menu →</span>
+      </a>
+    </aside>
+    </div>
 
-    <section class="journal card" id="journal-box">
-      <h2 class="sec"><span>Dailies</span> <small>How did today go?</small></h2>
+    <section class="journal panel" id="journal-box">
+      <h2 class="sec">Dailies <small>How did today go?</small></h2>
       ${journalForm(now)}
     </section>`;
 
@@ -151,8 +164,23 @@ function trainLine(s, now, type) {
   return type === "run" ? "Oxford Run Club, 18:45. Log it when you're back." : `${SESSIONS[type].name}. Log it in Hevy and it'll tick itself, or tap below.`;
 }
 
+const PHASE_LABEL = { cut: "cut phase", gain: "lean-gain phase", recomp: "recomp phase", unknown: "" };
+
+// The daily-list ring in the hero.
+function ring(done, total, label) {
+  const r = 54, C = 2 * Math.PI * r, f = total ? done / total : 0;
+  return `<div class="ring${done === total ? " full" : ""}" role="img" aria-label="Today's list: ${done} of ${total} done">
+    <svg viewBox="0 0 128 128" aria-hidden="true"><circle class="ring-track" cx="64" cy="64" r="${r}"/>
+      <circle class="ring-fill" cx="64" cy="64" r="${r}" style="--c:${C.toFixed(1)};--off:${(C * (1 - f)).toFixed(1)}"/></svg>
+    <div class="ring-label"><b>${done}<small>/${total}</small></b><span>${esc(label)}</span></div>
+  </div>`;
+}
+
+let justDone = null; // the item just ticked, so only it gets the pop animation
+
 function item(key, done, title, sub, controls, toggle = false) {
-  return `<div class="item${done ? " done" : ""}" data-item="${key}">
+  const pop = done && justDone === key ? " pop" : "";
+  return `<div class="item${done ? " done" : ""}${pop}" data-item="${key}">
     ${toggle ? `<button class="tick" data-toggle="${key}" aria-pressed="${done}" aria-label="${esc(title)}: ${done ? "done" : "not done"}"></button>` : `<span class="tick" aria-hidden="true"></span>`}
     <div class="i-body"><p class="i-title">${esc(title)}</p><p class="i-sub">${sub}</p>${controls ? `<div class="i-ctl">${controls}</div>` : ""}</div>
   </div>`;
@@ -195,7 +223,11 @@ function runTimer(view) {
 }
 
 function setCheck(date, patch) {
+  const key = Object.keys(patch)[0];
+  justDone = key;
+  if (patch[key]) navigator.vibrate?.(12);
   setRec("checks", date, patch);
+  justDone = null;
   maybePerfect(date);
 }
 
@@ -231,13 +263,16 @@ function wireToday(view, now, sess) {
     const k = b.dataset.toggle;
     setCheck(now, { [k]: !store.state.checks[now]?.[k] });
   }));
-  $('[data-act="logtrain"]', view)?.addEventListener("click", () => {
+  $$('[data-act="logtrain"]', view).forEach((b) => b.addEventListener("click", () => {
     const id = uid();
+    justDone = "train";
+    navigator.vibrate?.(20);
     update((s) => { s.sessions[id] = stamp({ id, date: now, type: context().type === "rest" ? "upperA" : context().type, source: "manual" }); });
+    justDone = null;
     toast(`${sess.name}: in the can. 🎬`);
     maybePerfect(now);
-  });
-  $('[data-act="cant"]', view)?.addEventListener("click", () => openDayPanel(now));
+  }));
+  $$('[data-act="cant"]', view).forEach((b) => b.addEventListener("click", () => openDayPanel(now)));
   $$('[data-act="photo"]', view).forEach((b) => b.addEventListener("click", () => photoDialog(now, refresh)));
   $('[data-act="tojournal"]', view)?.addEventListener("click", (e) => { e.preventDefault(); $("#journal-box textarea", view).focus(); });
   $(".inline-weigh", view)?.addEventListener("submit", (e) => { e.preventDefault(); logWeight(now, Number(e.target.querySelector("input").value)); });
@@ -295,13 +330,11 @@ export function renderSession(view, type) {
 function renderCasting(view) {
   const p = profile();
   view.innerHTML = `
-    <section class="titlecard casting">
-      <div class="clapper" aria-hidden="true"></div>
-      <div class="slate">
-        <p class="kicker">Casting sheet · before day one</p>
-        <h1 class="greet">Welcome to The Cut, ${esc(p.name)}.</h1>
-        <p class="greet-sub">A few details and we roll camera. These set your calories, your targets and your road to ${p.goalKg} kg.</p>
-      </div>
+    <section class="hero casting">
+      <div class="hero-mark" aria-hidden="true">Day one</div>
+      <p class="hero-meta"><span class="rec" aria-hidden="true"></span><span>Casting</span><span>Before day one</span></p>
+      <h1 class="hero-title">Welcome to The Cut, ${esc(p.name)}.</h1>
+      <p class="hero-sub">A few details and we roll camera. These set your calories, your targets and your road to ${p.goalKg} kg.</p>
     </section>
     ${configured() ? "" : `<section class="card join vf">
       <h2>Already using The Cut on another device?</h2>
