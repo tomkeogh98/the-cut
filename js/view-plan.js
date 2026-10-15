@@ -1,14 +1,15 @@
 // The Script (goals), Craft services (meals), the Programme (+ Hevy) and the Production office (settings).
-import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=2";
-import { configured, exportJSON, importJSON, profile, saveSettings, stamp, store, syncNow, testConnection, update } from "./store.js?v=2";
-import { $, $$, context, toast } from "./ui.js?v=2";
-import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=2";
-import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=2";
-import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=2";
-import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=2";
-import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=2";
-import { scheduledType } from "./schedule.js?v=2";
-import { hevySyncNow } from "./app.js?v=2";
+import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=3";
+import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=3";
+import { $, $$, context, toast } from "./ui.js?v=3";
+import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=3";
+import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=3";
+import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=3";
+import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=3";
+import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=3";
+import { scheduledType } from "./schedule.js?v=3";
+import { hevySyncNow } from "./app.js?v=3";
+import { devicesCard, wireDevices } from "./devices.js?v=3";
 
 // ================= THE SCRIPT (goals) =================
 export function renderScript(view) {
@@ -158,7 +159,7 @@ export function renderProgram(view) {
       <div class="hevy-grid">
         <div>
           <h3>1 · Connect</h3>
-          <p>With <b>Hevy Pro</b>, get your API key at <a href="https://hevy.com/settings?developer" target="_blank" rel="noopener">hevy.com → Settings → Developer</a> and paste it here. Workouts you log in Hevy then tick off training days, fill in "last time" numbers, and drive your lift goals. Weigh-ins sync both ways.</p>
+          <p>With <b>Hevy Pro</b>, get your API key at <a href="https://hevy.com/settings?developer" target="_blank" rel="noopener">hevy.com → Settings → Developer</a> and paste it here, once: your other synced devices pick it up automatically. Workouts you log in Hevy then tick off training days, fill in "last time" numbers, and drive your lift goals. Weigh-ins sync both ways.</p>
           <form id="hevyForm" class="row-form"><input name="key" type="password" autocomplete="off" placeholder="Hevy API key" value="${esc(st.hevyKey)}" aria-label="Hevy API key"><button class="btn primary">Save & test</button></form>
           ${st.hevyKey ? `<p><button class="btn" id="hevySync">Sync now</button> <label class="inline fine"><input type="checkbox" id="pushW" ${st.hevyPushWeights ? "checked" : ""}> Send weigh-ins to Hevy</label></p>` : ""}
           <p class="fine" id="hevyMsg">${esc(store.hevySync.message || "")}</p>
@@ -179,11 +180,11 @@ export function renderProgram(view) {
   $("#hevyForm", view).addEventListener("submit", async (e) => {
     e.preventDefault();
     const key = cleanKey(new FormData(e.target).get("key"));
-    if (!key) { saveSettings({ hevyKey: "" }); renderProgram(view); return; }
+    if (!key) { setHevyKey(""); renderProgram(view); return; }
     $("#hevyMsg", view).textContent = "Testing…";
     try {
       const who = await testKey(key);
-      saveSettings({ hevyKey: key });
+      setHevyKey(key);
       toast(`Connected to Hevy as ${who}.`);
       await hevySyncNow(true);
       renderProgram(view);
@@ -223,6 +224,7 @@ export function renderOffice(view) {
       <h1>Behind the scenes.</h1>
     </section>
     <div class="office-grid">
+      ${devicesCard(st)}
       <form class="card" id="prof">
         <h2>Profile</h2>
         <label>Height (cm) <input name="heightCm" type="number" step="0.1" value="${p.heightCm}"> <span class="fine">${cmToFtIn(p.heightCm)}</span></label>
@@ -237,19 +239,6 @@ export function renderOffice(view) {
         <button class="btn primary">Save profile</button>
       </form>
       <div>
-        <form class="card" id="syncForm">
-          <h2>Sync across devices</h2>
-          <p>Your data saves on this device first, then syncs to a <b>private</b> GitHub repo so your phone and laptop match.</p>
-          <ol class="fine steps">
-            <li>Create a fine-grained token at <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">github.com/settings/personal-access-tokens</a>.</li>
-            <li>Repository access → Only select repositories → <b>the-cut-data</b>.</li>
-            <li>Permissions → Repository → <b>Contents: Read and write</b>. Generate, then paste it below (on each device).</li>
-          </ol>
-          <label>Data repo <input name="repo" value="${esc(st.repo)}"></label>
-          <label>Token <input name="token" type="password" autocomplete="off" value="${esc(st.token)}" placeholder="github_pat_…"></label>
-          <button class="btn primary">Save & test</button> ${configured() ? `<button class="btn" type="button" id="syncNow">Sync now</button>` : ""}
-          <p class="fine" id="syncMsg">${esc(store.sync.message || "")}</p>
-        </form>
         <section class="card">
           <h2>Backup</h2>
           <p>Download everything as JSON (photos excluded), or restore from a backup. Restoring merges; it never deletes.</p>
@@ -271,20 +260,7 @@ export function renderOffice(view) {
     });
     toast("Profile saved.");
   });
-  $("#syncForm", view).addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const f = new FormData(e.target);
-    saveSettings({ repo: f.get("repo"), token: f.get("token") });
-    const msg = $("#syncMsg", view);
-    msg.textContent = "Testing…";
-    try {
-      const name = await testConnection();
-      msg.textContent = `Connected to ${name}. Syncing…`;
-      await syncNow();
-      msg.textContent = store.sync.status === "ok" ? `Connected to ${name}. Synced.` : store.sync.message;
-    } catch (err) { msg.textContent = err.message; }
-  });
-  $("#syncNow", view)?.addEventListener("click", () => syncNow());
+  wireDevices(view, () => renderOffice(view));
   $("#export", view).addEventListener("click", () => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(exportJSON());

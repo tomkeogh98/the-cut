@@ -1,12 +1,12 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=2";
-import { onboarded, profile, setRec, store, syncNow, update } from "./store.js?v=2";
-import { $, $$, celebrate, toast } from "./ui.js?v=2";
-import { renderSession, renderToday } from "./view-today.js?v=2";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=2";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=2";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=2";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=2";
+import { pad, reducedMotion } from "./util.js?v=3";
+import { configured, connectDevice, onboarded, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=3";
+import { $, $$, celebrate, modal, toast } from "./ui.js?v=3";
+import { renderSession, renderToday } from "./view-today.js?v=3";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=3";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=3";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=3";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=3";
 
 const ROUTES = {
   "": renderToday,
@@ -23,9 +23,21 @@ const ROUTES = {
 const view = $("#view");
 let renderedRev = -1, pendingRender = false, quiet = false;
 
+const MORE = ["rushes", "craft", "program", "dailies", "office"];
+
 function route() {
   const [name, arg] = location.hash.replace(/^#\/?/, "").split("/");
-  $$("nav.tabs a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === `#/${name}` ? "page" : "false"));
+  if (name === "pair") { pairDevice(arg); return; }
+  $$("nav.tabs a, nav.bottom-tabs a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === `#/${name}` ? "page" : "false"));
+  $("#moreBtn")?.setAttribute("aria-current", MORE.includes(name) ? "page" : "false");
+  view.dataset.route = name || "today";
+  drawBanner();
+  // A connected device that hasn't pulled yet shouldn't show the first-run form: wait for the data.
+  if (!onboarded() && configured() && !store.sync.lastSynced && store.sync.status !== "error") {
+    view.innerHTML = `<section class="card loading"><p class="marker">Pulling your footage…</p><p class="fine">Fetching your data from the private repo.</p></section>`;
+    renderedRev = -1;
+    return;
+  }
   if (!onboarded() && name !== "office") { renderToday(view); renderedRev = store.rev; return; }
   if (name === "session") renderSession(view, arg);
   else (ROUTES[name] || renderToday)(view);
@@ -113,7 +125,7 @@ function drawSync() {
   const b = $("#sync");
   const s = store.sync;
   b.dataset.status = s.status;
-  b.querySelector("span").textContent = s.status === "ok" ? "synced" : s.status === "syncing" ? "syncing" : s.status === "error" ? "sync error" : "local only";
+  b.querySelector("span").textContent = s.status === "ok" ? "synced" : s.status === "syncing" ? "syncing" : s.status === "error" ? "sync error" : "not synced";
   b.title = s.message || "Saved on this device only. Set up sync in Settings.";
 }
 $("#sync").addEventListener("click", () => {
@@ -141,8 +153,52 @@ try {
   if (t === "dark" || t === "light") document.documentElement.dataset.theme = t;
 } catch { /* ignore */ }
 
+// ---------- pairing & the "not synced" banner ----------
+async function pairDevice(code) {
+  // Drop the token from the address bar and history straight away.
+  history.replaceState(null, "", `${location.pathname}#/`);
+  const p = readPairCode(code || "");
+  if (!p) { toast("That setup link looks broken. Make a fresh one in Settings on your other device.", "bad"); route(); return; }
+  view.innerHTML = `<section class="card loading"><p class="marker">Connecting this device…</p><p class="fine">Checking the private repo and pulling your data.</p></section>`;
+  try {
+    await connectDevice(p.repo, p.token);
+    toast("This device is connected. Everything's in sync. 🎬");
+  } catch (e) {
+    toast(e.message, "bad");
+  }
+  route();
+}
+
+function drawBanner() {
+  const b = $("#syncBanner");
+  const s = store.sync;
+  if (!configured()) {
+    b.hidden = false;
+    b.className = "sync-banner";
+    b.innerHTML = `<span><b>This device isn't syncing.</b> Your other laptops and phone can't see what you log here.</span> <a href="#/office">Connect it →</a>`;
+  } else if (s.status === "error") {
+    b.hidden = false;
+    b.className = "sync-banner bad";
+    b.innerHTML = `<span><b>Sync problem:</b> ${s.message.replace(/[<>&]/g, "")}</span> <a href="#/office">Fix it →</a>`;
+  } else b.hidden = true;
+}
+
+// Bottom-tab "More" sheet on phones.
+$("#moreBtn")?.addEventListener("click", () => {
+  modal(`<div class="sheet-body more-sheet"><p class="kicker">More</p><nav aria-label="More pages">
+    <a href="#/rushes"><b>Photos</b><small>rushes · progress pictures</small></a>
+    <a href="#/craft"><b>Meals</b><small>craft services · calories & meal cards</small></a>
+    <a href="#/program"><b>Programme</b><small>the plan + Hevy</small></a>
+    <a href="#/dailies"><b>Journal</b><small>dailies · past entries</small></a>
+    <a href="#/office"><b>Settings</b><small>sync, devices, profile</small></a>
+  </nav></div>`, (d) => d.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => d.close())));
+});
+
 // ---------- boot ----------
-store.subscribe(() => { drawSync(); maybeRerender(); });
+store.subscribe(() => { drawSync(); drawBanner(); maybeRerender(); });
+// Pull every minute while the site is open, so devices stay in step without a reload.
+setInterval(() => { if (document.visibilityState === "visible" && configured()) syncNow(); }, 60000);
+window.addEventListener("focus", () => { if (configured()) syncNow(); });
 window.addEventListener("hashchange", navigate);
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") { syncNow(); hevySyncNow(); if (store.rev === renderedRev) route(); }

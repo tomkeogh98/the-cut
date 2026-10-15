@@ -1,18 +1,21 @@
 // Milestones: weight steps to the goal, lift targets that adapt to current strength, and habit milestones.
-import { addDays, daysBetween, live, today } from "./util.js?v=2";
-import { projectDate, weeklyRate, weightSeries, withTrend } from "./body.js?v=2";
-import { liftHistory, liftNow } from "./hevy.js?v=2";
-import { LIFTS, seasonInfo } from "./program.js?v=2";
-import { dayChecks, perfectStreak, trainedOn, weekSummary } from "./schedule.js?v=2";
+import { addDays, daysBetween, live, today } from "./util.js?v=3";
+import { projectDate, weeklyRate, weightSeries, withTrend } from "./body.js?v=3";
+import { liftHistory, liftNow } from "./hevy.js?v=3";
+import { LIFTS, seasonInfo } from "./program.js?v=3";
+import { dayChecks, perfectStreak, trainedOn, weekSummary } from "./schedule.js?v=3";
 
 // ---------- weight ----------
 export function weightStatus(state, profile, now = today()) {
-  const series = withTrend(weightSeries(state));
+  // The journey starts on day one: older weigh-ins (e.g. years of Hevy history) are kept but not part of the trend.
+  const raw = weightSeries(state);
+  const from = state.startDate || "0000";
+  const series = withTrend(raw.filter((p) => p.date >= from));
   const last = series[series.length - 1];
   const start = profile.startKg ?? series[0]?.kg ?? null;
   const current = last?.trend ?? start;
   const rate = weeklyRate(series, 28, now);
-  return { series, start, current, latest: last?.kg ?? null, latestDate: last?.date ?? null, rate, goal: profile.goalKg };
+  return { series, history: withTrend(raw), before: raw.length - series.length, start, current, latest: last?.kg ?? null, latestDate: last?.date ?? null, rate, goal: profile.goalKg };
 }
 
 export function weightMilestones(ws, now = today()) {

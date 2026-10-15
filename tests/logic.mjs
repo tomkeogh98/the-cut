@@ -56,3 +56,17 @@ console.log(G.habitGoals(st, p, now).map((h) => `${h.id} ${h.have}/${h.need}`).j
 console.log('matchType', S.matchType('Upper A · Chest & back thickness'), S.typeOn(st, '2026-10-13'));
 console.log('season', P.seasonInfo('2026-09-28', now));
 console.log('perfect', S.perfectStreak(st, p, now));
+// field-level merge: water on one device, guitar on another, same day → both survive
+const ST = await import(W + '/js/store.js?v=3');
+const phone = { water: 2000, _f: { water: 200 }, updatedAt: 200 };
+const laptop = { guitar: true, _f: { guitar: 300 }, updatedAt: 300 };
+const m1 = ST.mergeRec(phone, laptop), m2 = ST.mergeRec(laptop, phone);
+console.log('mergeRec', JSON.stringify(m1), m1.water === 2000 && m1.guitar === true && m2.water === 2000 && m2.guitar === true ? 'OK' : 'FAIL');
+const older = { water: 1000, _f: { water: 100 }, updatedAt: 100 };
+console.log('mergeRec newer field wins', ST.mergeRec(phone, older).water === 2000 && ST.mergeRec(older, phone).water === 2000 ? 'OK' : 'FAIL');
+const legacy = { water: 500, updatedAt: 50 }; // record written before field stamps existed
+console.log('mergeRec legacy', ST.mergeRec(legacy, laptop).water === 500 && ST.mergeRec(legacy, laptop).guitar === true ? 'OK' : 'FAIL');
+const tomb = { deleted: true, _f: { deleted: 400 }, updatedAt: 400 };
+console.log('mergeRec tombstone', ST.mergeRec(phone, tomb).deleted === true ? 'OK' : 'FAIL');
+ST.saveSettings({ token: 'github_pat_TEST' }); const code = ST.pairLink().split('#/pair/')[1];
+console.log('pair roundtrip', JSON.stringify(ST.readPairCode(code)), ST.readPairCode('garbage') === null ? 'OK' : 'FAIL');

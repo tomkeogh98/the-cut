@@ -1,16 +1,16 @@
 // Timeline (tracker), Scope (weight), Rushes (photos) and Dailies (journal).
-import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=2";
-import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=2";
-import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=2";
-import { lineChart, sparkline } from "./chart.js?v=2";
-import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=2";
-import { weightMilestones } from "./goals.js?v=2";
-import { SESSIONS } from "./program.js?v=2";
-import { pushWeight } from "./hevy.js?v=2";
+import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=3";
+import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=3";
+import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=3";
+import { lineChart, sparkline } from "./chart.js?v=3";
+import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=3";
+import { weightMilestones } from "./goals.js?v=3";
+import { SESSIONS } from "./program.js?v=3";
+import { pushWeight } from "./hevy.js?v=3";
 import {
   dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, REASONS, scheduledType, sessionsOn, shiftCheck, shiftFrom, shiftInto,
   slackReport, streak, trainedOn, typeOn, weekSummary,
-} from "./schedule.js?v=2";
+} from "./schedule.js?v=3";
 
 const STATUS_LABEL = {
   done: "Trained", off: "Not scheduled", missed: "Missed", broken: "Missed (rule broken)", moved: "Moved",
@@ -166,6 +166,7 @@ export function openDayPanel(date) {
 }
 
 // ================= SCOPE (weight) =================
+let showAll = false; // weight chart range: since day one (default) or all history
 export function renderScope(view) {
   const c = context();
   const p = c.profile, ws = c.ws, now = c.now;
@@ -204,6 +205,7 @@ export function renderScope(view) {
     </div>
     <section class="card">
       <h2>The scope <span class="h-sub">weigh-ins (dots) · trend (line) · projection (dashed)</span></h2>
+      ${ws.before ? `<div class="pose-tabs" role="group" aria-label="Range"><button class="chip${showAll ? "" : " on"}" data-range="cut">Since day one</button><button class="chip${showAll ? " on" : ""}" data-range="all">All history (+${ws.before} older)</button></div>` : ""}
       <div id="wchart"></div>
       <details class="table-view"><summary>Table view</summary>
         <table><thead><tr><th>Date</th><th>Weigh-in</th><th>Trend</th><th></th></tr></thead><tbody>
@@ -211,15 +213,16 @@ export function renderScope(view) {
         </tbody></table>
       </details>
     </section>`;
-  const pts = ws.series.map((r) => ({ date: r.date, value: r.kg, trend: r.trend }));
+  const pts = (showAll ? ws.history : ws.series).map((r) => ({ date: r.date, value: r.kg, trend: r.trend }));
   const chartEl = $("#wchart", view);
   const draw = () => lineChart(chartEl, {
     points: pts, goal: p.goalKg, goalLabel: `FINAL CUT · ${p.goalKg} kg`, unit: "kg", label: "Body weight over time",
-    projection: due && ws.current != null && daysBetween(now, due) < 400 ? { date: due, value: p.goalKg } : null,
+    projection: !showAll && due && ws.current != null && daysBetween(now, due) < 400 ? { date: due, value: p.goalKg } : null,
     empty: "Log your first weigh-in to start the chart.",
   });
   draw();
   new ResizeObserver(() => draw()).observe(chartEl);
+  $$("[data-range]", view).forEach((b) => b.addEventListener("click", () => { showAll = b.dataset.range === "all"; renderScope(view); }));
   $("#wform", view).addEventListener("submit", (e) => {
     e.preventDefault();
     const f = new FormData(e.target);

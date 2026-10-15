@@ -1,16 +1,17 @@
 // Today (the call sheet), the session page, and first-run onboarding (the casting sheet).
-import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=2";
-import { onboarded, profile, setRec, stamp, store, update } from "./store.js?v=2";
-import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=2";
-import { pickGreeting } from "./greetings.js?v=2";
-import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=2";
+import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=3";
+import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=3";
+import { connectForm, wireConnectForm } from "./devices.js?v=3";
+import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=3";
+import { pickGreeting } from "./greetings.js?v=3";
+import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=3";
 import {
   buildFrom, dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, nudgeCheck, previousDay, scheduledType, shiftFrom, shiftInto,
   trainedOn, typeOn, WATER_GOAL, weekSummary,
-} from "./schedule.js?v=2";
-import { lastPerformance } from "./hevy.js?v=2";
-import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=2";
-import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=2";
+} from "./schedule.js?v=3";
+import { lastPerformance } from "./hevy.js?v=3";
+import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=3";
+import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=3";
 
 let greeting = null; // one greeting per page load, so ticking boxes doesn't reshuffle it
 
@@ -76,7 +77,7 @@ export function renderToday(view) {
         </div>
         <p class="camera"><span>On camera:</span> ${esc(sess.camera)}</p>
         ${sess.exercises.length ? hevyAims(sess, season) : ""}
-        ${sess.notes ? `<ul class="notes">${sess.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+        ${sess.notes ? `<details class="tips"><summary>${type === "run" ? "Run-club tips" : "Recovery tips"}</summary><ul class="notes">${sess.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul></details>` : ""}
         ${sess.exercises.length ? `<a class="btn" href="#/session/${type}">Open the full ${esc(sess.name)} plan →</a>` : ""}
       </section>
 
@@ -302,6 +303,12 @@ function renderCasting(view) {
         <p class="greet-sub">A few details and we roll camera. These set your calories, your targets and your road to ${p.goalKg} kg.</p>
       </div>
     </section>
+    ${configured() ? "" : `<section class="card join vf">
+      <h2>Already using The Cut on another device?</h2>
+      <p>Don't start over here. On that device, open <b>Settings → Devices & sync</b> and scan the QR code or open the setup link on this one. Or paste your sync token:</p>
+      ${connectForm(store.settings, { submit: "Connect & pull my data" })}
+    </section>
+    <p class="or-line"><span>or, first time ever</span></p>`}
     <form class="card casting-form" id="cast">
       <div class="cast-grid">
         <label>Height <input name="height" value="${p.heightCm}" type="number" step="0.1" min="120" max="240" required> <span class="fine">cm (${cmToFtIn(p.heightCm)})</span></label>
@@ -317,6 +324,7 @@ function renderCasting(view) {
         <textarea name="why" rows="3">${esc(p.why)}</textarea></label>
       <button class="btn primary big" type="submit">Roll camera →</button>
     </form>`;
+  wireConnectForm(view, () => { location.hash = "#/"; renderToday(view); });
   $("#cast", view).addEventListener("submit", (e) => {
     e.preventDefault();
     const f = new FormData(e.target);

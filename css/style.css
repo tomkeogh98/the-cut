@@ -91,7 +91,7 @@ p { margin: 0 0 .7em; }
 .brand-word { font-family: var(--f-display); font-size: 1.7rem; letter-spacing: .04em; line-height: 1; }
 .brand-sub { font-family: var(--f-mono); font-size: .68rem; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); white-space: nowrap; }
 .timecode { justify-self: end; font-size: .95rem; color: var(--ink-2); padding: 3px 8px; border: 1px solid var(--line-2); }
-.sync {
+.sync { justify-self: end;
   display: inline-flex; align-items: center; gap: 6px; font: 600 .72rem var(--f-mono); text-transform: uppercase; letter-spacing: .1em;
   background: transparent; color: var(--ink-2); border: 1px solid var(--line-2); padding: 5px 9px; cursor: pointer;
 }
@@ -537,3 +537,106 @@ a.wp-day[href]:hover { outline: 2px solid var(--accent); }
 }
 @media (max-width: 560px) { .timecode { display: none; } }
 @media (min-width: 1100px) and (max-width: 1599px) { .brand-sub { display: none; } }
+
+/* ---------------- sync & devices ---------------- */
+/* 16px stops iOS Safari zooming into a field when it's tapped */
+input, select, textarea { font-size: 16px; }
+.sync-banner { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: center; justify-content: space-between;
+  max-width: 1800px; margin: 12px auto 0; padding: 10px 14px; width: calc(100% - 2 * var(--gutter));
+  background: var(--panel); border: 1px solid var(--line-2); border-left: 4px solid var(--moved); font-size: .92rem; }
+.sync-banner.bad { border-left-color: var(--miss); }
+.sync-banner[hidden] { display: none; }
+.sync-banner a { font-weight: 800; white-space: nowrap; }
+.devices h3.label { margin-top: 14px; }
+.sync-ok { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sync-ok i { width: 10px; height: 10px; border-radius: 50%; background: var(--go); flex: none; }
+.warn-line { border-left: 3px solid var(--moved); padding-left: 10px; }
+.pair { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; margin-bottom: 12px; }
+.qr { width: 200px; min-height: 60px; display: grid; place-items: center; }
+.qr svg { width: 200px; height: 200px; background: #fff; display: block; }
+.pair-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.devices details { margin-top: 10px; }
+.devices summary, .tips summary { cursor: pointer; padding: 6px 0; }
+.connect-form { margin-top: 10px; }
+.join h2 { font-family: var(--f-display); font-weight: 400; text-transform: uppercase; font-size: 1.5rem; }
+.or-line { display: flex; align-items: center; gap: 12px; font: 700 .72rem var(--f-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0; }
+.or-line::before, .or-line::after { content: ""; flex: 1; height: 1px; background: var(--line-2); }
+.loading { text-align: center; padding: 48px 16px; }
+.tips { margin: 10px 0 14px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.tips summary { font: 700 .75rem var(--f-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+.more-sheet nav { display: grid; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.more-sheet a { display: flex; flex-direction: column; padding: 14px 16px; background: var(--panel); text-decoration: none; }
+.more-sheet a b { font-family: var(--f-display); font-weight: 400; text-transform: uppercase; font-size: 1.35rem; line-height: 1.1; }
+.more-sheet a small { font-family: var(--f-mono); font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.bottom-tabs { display: none; }
+@media (min-width: 700px) { .pair { grid-template-columns: 200px minmax(0, 1fr); } }
+
+/* ---------------- phones ---------------- */
+@media (max-width: 759px) {
+  body { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
+  .top { padding-bottom: 10px; }
+  .top .tabs { display: none; }
+  .brand-word { font-size: 1.5rem; }
+  main { padding-top: 16px; gap: 16px; }
+  .bottom-tabs {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+    background: color-mix(in srgb, var(--bg) 94%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--line-2); padding: 0 0 env(safe-area-inset-bottom);
+  }
+  .bottom-tabs a, .bottom-tabs button {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 58px; padding: 6px 2px;
+    text-decoration: none; color: var(--muted); background: none; border: 0; border-top: 3px solid transparent; font: inherit; cursor: pointer;
+  }
+  .bottom-tabs i { font-style: normal; font-size: 1.15rem; line-height: 1; }
+  .bottom-tabs b { font: 700 .68rem var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
+  .bottom-tabs [aria-current="page"] { color: var(--ink); border-top-color: var(--accent); }
+  .toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .foot { padding-bottom: 24px; }
+
+  /* Today: greeting → brief → the list → week & stats → journal */
+  main[data-route="today"] .today-grid { display: contents; }
+  main[data-route="today"] > .titlecard { order: 1; }
+  main[data-route="today"] > .directors-note { order: 2; }
+  main[data-route="today"] .brief { order: 3; }
+  main[data-route="today"] > .the-list { order: 4; }
+  main[data-route="today"] .side { order: 5; }
+  main[data-route="today"] > .journal { order: 6; }
+  .slate { padding: 16px; }
+  .slate-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 14px; }
+  .slate-fields div:nth-child(-n+2) { display: none; }
+  .slate-fields div:nth-child(n) { border-top: 0; }
+  .slate-fields div:nth-child(3), .slate-fields div:nth-child(4) { border-right: 1px solid #3a3a40; }
+  .greet { font-size: clamp(2.3rem, 12vw, 3.6rem); }
+  .clapper { height: 24px; }
+  .brief-cols { gap: 14px; }
+  .b-session { font-size: 1.7rem; }
+  .camera { font-size: .92rem; }
+  .aims li { padding: 8px; }
+  .aims li:nth-child(n+3) { display: none; } /* the full plan is one tap away */
+
+  /* the list: controls run full width under the title */
+  .item { grid-template-columns: 38px minmax(0, 1fr); gap: 4px 12px; padding: 14px 12px; }
+  .item .i-body { display: contents; }
+  .item .tick { grid-row: span 2; width: 34px; height: 34px; }
+  .item .i-title, .item .i-sub { grid-column: 2; }
+  .item .i-ctl { grid-column: 1 / -1; margin-top: 6px; }
+  .water { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; max-width: none; width: 100%; }
+  .glass { width: 100%; height: 40px; }
+  .i-ctl .btn { flex: 1 1 auto; }
+  .inline-weigh { width: 100%; }
+  .inline-weigh input { flex: 1; width: auto; }
+
+  .card { padding: 16px; }
+  .stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stat b { font-size: 2rem; }
+  .chip { min-height: 40px; }
+  .btn { min-height: 44px; }
+  .week-plan { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .wp-day { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-height: 0; padding: 12px 14px; }
+  .wp-day b { font-size: 1.25rem; }
+  .wp-wd { width: 34px; }
+  .row-form { flex-direction: column; }
+
+  /* dialogs become bottom sheets */
+  dialog.sheet { margin: auto 0 0; width: 100%; max-width: 100%; max-height: 88vh; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); border-width: 1px 0 0; }
+}

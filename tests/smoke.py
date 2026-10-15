@@ -243,10 +243,12 @@ with sync_playwright() as p:
     page.wait_for_selector(".entry")
     page.goto(BASE + "/#/office")
     page.wait_for_selector("#prof")
-    page.fill("#syncForm input[name=token]", " github_pat_bad​ token \n")
-    page.click("#syncForm button.primary")
-    page.wait_for_function("() => !/Testing/.test(document.querySelector('#syncMsg').textContent)", timeout=15000)
-    print("bad token message:", page.inner_text("#syncMsg"))
+    assert page.locator("#syncBanner").is_visible(), "unsynced device should show the banner"
+    page.locator("#devices details summary").first.click()
+    page.fill("#connectForm input[name=token]", " github_pat_bad​ token \n")
+    page.click("#connectForm button.primary")
+    page.wait_for_function("() => !/Connecting/.test(document.querySelector('#connectMsg').textContent)", timeout=15000)
+    print("bad token message:", page.inner_text("#connectMsg"))
     saved = page.evaluate("() => JSON.parse(localStorage.getItem('cut.settings.v1')).token")
     assert saved == "github_pat_badtoken", saved
     page.evaluate("() => { const s = JSON.parse(localStorage.getItem('cut.settings.v1')); s.token=''; localStorage.setItem('cut.settings.v1', JSON.stringify(s)); }")
