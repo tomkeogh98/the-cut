@@ -1,12 +1,13 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=6";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=6";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=6";
-import { renderSession, renderToday } from "./view-today.js?v=6";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=6";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=6";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=6";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=6";
+import { pad, reducedMotion } from "./util.js?v=7";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=7";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=7";
+import { renderSession, renderToday } from "./view-today.js?v=7";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=7";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=7";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=7";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=7";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=7";
 
 const ROUTES = {
   "": renderToday,
@@ -198,11 +199,11 @@ $("#moreBtn")?.addEventListener("click", () => {
 // ---------- boot ----------
 store.subscribe(() => { drawSync(); drawBanner(); maybeRerender(); });
 // Pull every minute while the site is open, so devices stay in step without a reload.
-setInterval(() => { if (document.visibilityState === "visible" && configured()) syncNow(); }, 60000);
+setInterval(() => { if (document.visibilityState !== "visible") return; if (configured()) syncNow(); syncGuitar(); }, 60000);
 window.addEventListener("focus", () => { if (configured()) syncNow(); });
 window.addEventListener("hashchange", navigate);
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") { syncNow(); hevySyncNow(); if (store.rev === renderedRev) route(); }
+  if (document.visibilityState === "visible") { syncNow(); hevySyncNow(); syncGuitar(); if (store.rev === renderedRev) route(); }
 });
 // Midnight rollover: redraw so "today" moves on.
 let lastDay = new Date().toDateString();
@@ -214,4 +215,7 @@ route();
 enter(view);
 syncNow();
 hevySyncNow();
+syncGuitar(true);
+// Guitar Hero (same site) saving a lesson in another tab ticks the list straight away.
+window.addEventListener("storage", (e) => { if (e.key === "gh.state.v1") applyGuitar(); });
 window.__cut = { store, setRec, syncNow, pairLink }; // handy for debugging in the console

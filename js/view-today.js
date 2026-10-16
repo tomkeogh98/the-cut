@@ -1,17 +1,18 @@
 // Today (the call sheet), the session page, and first-run onboarding (the casting sheet).
-import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=6";
-import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=6";
-import { connectForm, wireConnectForm } from "./devices.js?v=6";
-import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=6";
-import { pickGreeting } from "./greetings.js?v=6";
-import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=6";
+import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=7";
+import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=7";
+import { connectForm, wireConnectForm } from "./devices.js?v=7";
+import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=7";
+import { pickGreeting } from "./greetings.js?v=7";
+import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=7";
 import {
   buildFrom, dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, nudgeCheck, previousDay, scheduledType, shiftFrom, shiftInto,
   trainedOn, typeOn, WATER_GOAL, weekSummary,
-} from "./schedule.js?v=6";
-import { lastPerformance } from "./hevy.js?v=6";
-import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=6";
-import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=6";
+} from "./schedule.js?v=7";
+import { lastPerformance } from "./hevy.js?v=7";
+import { guitarOn, guitarStatus } from "./guitar.js?v=7";
+import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=7";
+import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=7";
 
 let greeting = null; // one greeting per page load, so ticking boxes doesn't reshuffle it
 
@@ -100,7 +101,7 @@ export function renderToday(view) {
       <div class="items">
         ${chk.items.train !== null ? item("train", chk.items.train, "Train", trainLine(s, now, type), trainedOn(s, now) ? "" : `<button class="btn primary" data-act="logtrain">Mark ${esc(sess.name)} done</button> <button class="btn ghost" data-act="cant">Can't today?</button>`) : item("train", true, "Rest day", "Nothing scheduled. An easy walk counts as bonus footage.", "")}
         ${item("water", chk.items.water, "4 L water", `${(chk.water / 1000).toFixed(2)} L of 4 L`, `<div class="water" role="group" aria-label="Water: tap a glass">${Array.from({ length: WATER_GOAL / 250 }, (_, i) => `<button class="glass${(i + 1) * 250 <= chk.water ? " full" : ""}" data-water="${(i + 1) * 250}" aria-label="${((i + 1) * 0.25).toFixed(2)} litres"></button>`).join("")}</div>`)}
-        ${item("guitar", chk.items.guitar, "Guitar practice", "Today's lesson lives on Guitar Hero.", `<a class="btn ghost" href="https://tomkeogh98.github.io/guitar-hero/" target="_blank" rel="noopener">Open Guitar Hero ↗</a>`, true)}
+        ${item("guitar", chk.items.guitar, "Guitar practice", guitarLine(now, chk.items.guitar), `<a class="btn ghost" href="https://tomkeogh98.github.io/guitar-hero/" target="_blank" rel="noopener">Open Guitar Hero ↗</a>`, true)}
         ${item("read", chk.items.read, "Read 30 minutes", "Before bed, phone in the other room.", readTimerHTML(), true)}
         ${item("journal", chk.items.journal, "Journal", "Two lines on how the day went. It's below.", `<a class="btn ghost" href="#journal-box" data-act="tojournal">Write it ↓</a>`)}
         ${chk.items.weigh !== null ? item("weigh", chk.items.weigh, "Weigh-in", chk.items.weigh ? `${kg(s.weights[now].kg)} kg logged` : "Morning, after the loo, before food.", chk.items.weigh ? "" : `<form class="inline-weigh"><input type="number" step="0.1" min="40" max="250" inputmode="decimal" placeholder="kg" aria-label="Weight in kg" required><button class="btn primary">Log</button></form>`) : ""}
@@ -154,6 +155,18 @@ function previouslyText(prev) {
   if (prev.excused) return `Yesterday was excused (${esc(prev.excused)}). If you're back on your feet, ease back in today.`;
   if (prev.missed) return `${when}'s <b>${esc(SESSIONS[prev.type]?.name || "session")}</b> didn't make the cut. No guilt: today's job isn't making it up, it's getting back on script.`;
   return `${when} was a rest day. Recovery is part of the work.`;
+}
+
+function guitarLine(now, done) {
+  const lessons = guitarOn(now);
+  if (lessons.length) {
+    const titles = lessons.map((l) => l.title || "Practice").join(", ");
+    return done ? `Done on Guitar Hero: ${esc(titles)} ✓` : `Guitar Hero shows ${esc(titles)} today. Tick it if it counts.`;
+  }
+  if (done) return store.state.checks[now]?.guitarFrom === "guitar-hero" ? "Done on Guitar Hero ✓" : "Done ✓";
+  const st = guitarStatus();
+  if (!st.local && !st.remoteOk && st.error) return "Finish a lesson on Guitar Hero and this ticks itself. (Open Guitar Hero once on this device so The Cut can see it.)";
+  return "Finish today's lesson on Guitar Hero and this ticks itself.";
 }
 
 function trainLine(s, now, type) {
@@ -260,7 +273,9 @@ function wireToday(view, now, sess) {
   }));
   $$("[data-toggle]", view).forEach((b) => b.addEventListener("click", () => {
     const k = b.dataset.toggle;
-    setCheck(now, { [k]: !store.state.checks[now]?.[k] });
+    const on = !store.state.checks[now]?.[k];
+    // Unticking a box Guitar Hero ticked for you sticks: it won't be re-ticked.
+    setCheck(now, k === "guitar" ? { guitar: on, guitarOff: !on } : { [k]: on });
   }));
   $$('[data-act="logtrain"]', view).forEach((b) => b.addEventListener("click", () => {
     const id = uid();

@@ -1,7 +1,7 @@
 // Hevy integration: pull workouts + body weight from the Hevy API (needs Hevy Pro),
 // push the programme as routines, or import Hevy's CSV export. The API allows browser calls (CORS *).
-import { fmt, live } from "./util.js?v=6";
-import { LIFTS, SESSIONS } from "./program.js?v=6";
+import { fmt, live } from "./util.js?v=7";
+import { LIFTS, SESSIONS } from "./program.js?v=7";
 
 const BASE = "https://api.hevyapp.com/v1";
 export const cleanKey = (v) => String(v || "").toLowerCase().replace(/[^0-9a-f-]/g, "");
