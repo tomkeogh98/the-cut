@@ -1,17 +1,17 @@
 // Today (the call sheet), the session page, and first-run onboarding (the casting sheet).
-import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=4";
-import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=4";
-import { connectForm, wireConnectForm } from "./devices.js?v=4";
-import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=4";
-import { pickGreeting } from "./greetings.js?v=4";
-import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=4";
+import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=5";
+import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=5";
+import { connectForm, wireConnectForm } from "./devices.js?v=5";
+import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=5";
+import { pickGreeting } from "./greetings.js?v=5";
+import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=5";
 import {
   buildFrom, dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, nudgeCheck, previousDay, scheduledType, shiftFrom, shiftInto,
   trainedOn, typeOn, WATER_GOAL, weekSummary,
-} from "./schedule.js?v=4";
-import { lastPerformance } from "./hevy.js?v=4";
-import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=4";
-import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=4";
+} from "./schedule.js?v=5";
+import { lastPerformance } from "./hevy.js?v=5";
+import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=5";
+import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=5";
 
 let greeting = null; // one greeting per page load, so ticking boxes doesn't reshuffle it
 
