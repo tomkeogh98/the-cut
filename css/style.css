@@ -217,7 +217,6 @@ legend { font-weight: 600; font-size: .9rem; padding: 0 6px; }
   font: 900 clamp(7rem, 26vw, 24rem)/.8 var(--f-body); font-stretch: 62%; text-transform: uppercase;
   color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, .07);
 }
-.hero-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; margin: 0 0 clamp(18px, 3vw, 34px); font: 500 expanded .7rem var(--f-label); letter-spacing: .1em; text-transform: uppercase; color: rgba(244, 244, 241, .55); }
 .hero-title { font-size: clamp(3.2rem, 10vw, 9rem); line-height: .84; margin: 0 0 .22em; max-width: 13ch; overflow-wrap: anywhere; }
 .hero-sub { font-size: clamp(1.05rem, 1.8vw, 1.4rem); color: rgba(244, 244, 241, .72); max-width: 46ch; margin: 0 0 clamp(22px, 3.5vw, 40px); }
 .hero-row { display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr); align-items: stretch; }
@@ -662,7 +661,7 @@ a.wp-day[href]:hover { transform: translateY(-3px); }
 .enter > *:nth-child(2) { animation-delay: .06s; } .enter > *:nth-child(3) { animation-delay: .12s; }
 .enter > *:nth-child(4) { animation-delay: .18s; } .enter > *:nth-child(5) { animation-delay: .24s; } .enter > *:nth-child(n+6) { animation-delay: .3s; }
 .enter .hero-title { animation: reveal .9s var(--ease) .1s both; }
-.enter .hero-sub, .enter .hero-meta { animation: rise .7s var(--ease) .25s both; }
+.enter .hero-sub { animation: rise .7s var(--ease) .25s both; }
 .enter .ring-fill { animation: ringIn 1.4s var(--ease) .35s both; }
 
 /* ---------------- bottom tabs (phones) ---------------- */
@@ -714,7 +713,6 @@ a.wp-day[href]:hover { transform: translateY(-3px); }
   main { padding-top: 14px; gap: 14px; }
   .card, .panel { padding: 18px; border-radius: 20px; }
   .hero { border-radius: 24px; padding: 22px 20px 24px; }
-  .hero-meta span:nth-child(3) { display: none; }
   .hero-title { font-size: clamp(3rem, 15vw, 4.6rem); }
   .scene { padding: 18px; }
   .scene-cta .btn.big { flex: 1 1 100%; }

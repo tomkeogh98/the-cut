@@ -1,12 +1,12 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=5";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=5";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=5";
-import { renderSession, renderToday } from "./view-today.js?v=5";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=5";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=5";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=5";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=5";
+import { pad, reducedMotion } from "./util.js?v=6";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=6";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=6";
+import { renderSession, renderToday } from "./view-today.js?v=6";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=6";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=6";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=6";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=6";
 
 const ROUTES = {
   "": renderToday,

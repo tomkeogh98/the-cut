@@ -17,7 +17,7 @@ with sync_playwright() as p:
     pg.wait_for_selector(".hero")
     pg.wait_for_timeout(1600)
     pg.screenshot(path=f"{OUT}/moment-hero.png")
-    pg.evaluate("() => import('/js/ui.js?v=5').then(m => m.celebrate('Perfect day', 'Training, water, guitar, reading, journal. Every box ticked.'))")
+    pg.evaluate("() => import('/js/ui.js?v=6').then(m => m.celebrate('Perfect day', 'Training, water, guitar, reading, journal. Every box ticked.'))")
     pg.wait_for_timeout(1400)
     pg.screenshot(path=f"{OUT}/moment-wrap.png")
     pg.keyboard.press("Escape")

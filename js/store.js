@@ -1,7 +1,7 @@
 // State lives in localStorage (works offline) and syncs to data.json in a private GitHub repo.
 // Progress photos are cached in IndexedDB and uploaded to photos/ in the same repo.
-import { today } from "./util.js?v=5";
-import { DEFAULT_PROFILE } from "./body.js?v=5";
+import { today } from "./util.js?v=6";
+import { DEFAULT_PROFILE } from "./body.js?v=6";
 
 const STATE_KEY = "cut.state.v1";
 const SETTINGS_KEY = "cut.settings.v1";

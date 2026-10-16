@@ -1,17 +1,17 @@
 // Today (the call sheet), the session page, and first-run onboarding (the casting sheet).
-import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=5";
-import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=5";
-import { connectForm, wireConnectForm } from "./devices.js?v=5";
-import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=5";
-import { pickGreeting } from "./greetings.js?v=5";
-import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=5";
+import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=6";
+import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=6";
+import { connectForm, wireConnectForm } from "./devices.js?v=6";
+import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=6";
+import { pickGreeting } from "./greetings.js?v=6";
+import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=6";
 import {
   buildFrom, dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, nudgeCheck, previousDay, scheduledType, shiftFrom, shiftInto,
   trainedOn, typeOn, WATER_GOAL, weekSummary,
-} from "./schedule.js?v=5";
-import { lastPerformance } from "./hevy.js?v=5";
-import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=5";
-import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=5";
+} from "./schedule.js?v=6";
+import { lastPerformance } from "./hevy.js?v=6";
+import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=6";
+import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=6";
 
 let greeting = null; // one greeting per page load, so ticking boxes doesn't reshuffle it
 
@@ -45,7 +45,6 @@ export function renderToday(view) {
   view.innerHTML = `
     <section class="hero">
       <div class="hero-mark" aria-hidden="true">${esc(sess.name)}</div>
-      <p class="hero-meta"><span class="rec" aria-hidden="true"></span><span>S${String(season.season).padStart(2, "0")} · EP ${c.ep}</span><span>Week ${season.week}/12 · ${esc(season.phase.name)}</span><span>${prettyDate(now)}</span></p>
       <h1 class="hero-title">${esc(greeting.h)}</h1>
       <p class="hero-sub">${esc(greeting.s)}</p>
       <div class="hero-row">
@@ -332,7 +331,6 @@ function renderCasting(view) {
   view.innerHTML = `
     <section class="hero casting">
       <div class="hero-mark" aria-hidden="true">Day one</div>
-      <p class="hero-meta"><span class="rec" aria-hidden="true"></span><span>Casting</span><span>Before day one</span></p>
       <h1 class="hero-title">Welcome to The Cut, ${esc(p.name)}.</h1>
       <p class="hero-sub">A few details and we roll camera. These set your calories, your targets and your road to ${p.goalKg} kg.</p>
     </section>
