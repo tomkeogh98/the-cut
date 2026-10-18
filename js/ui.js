@@ -1,10 +1,10 @@
 // Shared view helpers: the "now" context, dialogs, toasts, celebrations and nudge copy.
-import { addDays, daysBetween, esc, pickRandom, reducedMotion, today, weekday } from "./util.js?v=7";
-import { profile, store } from "./store.js?v=7";
-import { weightStatus } from "./goals.js?v=7";
-import { seasonInfo, SESSIONS } from "./program.js?v=7";
-import { dayStatus, perfectStreak, scheduledType, streak, trainedOn, typeOn } from "./schedule.js?v=7";
-import { isBirthday, age } from "./body.js?v=7";
+import { addDays, daysBetween, esc, pickRandom, reducedMotion, today, weekday } from "./util.js?v=8";
+import { profile, store } from "./store.js?v=8";
+import { weightStatus } from "./goals.js?v=8";
+import { seasonInfo, SESSIONS } from "./program.js?v=8";
+import { dayStatus, perfectStreak, scheduledType, streak, trainedOn, typeOn } from "./schedule.js?v=8";
+import { isBirthday, age } from "./body.js?v=8";
 
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];

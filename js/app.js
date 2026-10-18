@@ -1,13 +1,13 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=7";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=7";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=7";
-import { renderSession, renderToday } from "./view-today.js?v=7";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=7";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=7";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=7";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=7";
-import { applyGuitar, syncGuitar } from "./guitar.js?v=7";
+import { pad, reducedMotion } from "./util.js?v=8";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=8";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=8";
+import { renderSession, renderToday } from "./view-today.js?v=8";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=8";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=8";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=8";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=8";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=8";
 
 const ROUTES = {
   "": renderToday,

@@ -2,8 +2,8 @@
 // Both sites live on tomkeogh98.github.io, so they share localStorage: lessons finished on this device
 // are read straight from Guitar Hero's saved state, and lessons from other devices come from the
 // guitar-hero-data repo using Guitar Hero's own sync token (or The Cut's, if it has access).
-import { addDays, live, today } from "./util.js?v=7";
-import { setRec, store } from "./store.js?v=7";
+import { addDays, live, today } from "./util.js?v=8";
+import { setRec, store } from "./store.js?v=8";
 
 const GH_STATE = "gh.state.v1";
 const GH_SETTINGS = "gh.settings.v1";

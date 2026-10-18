@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <!-- Home-screen icon source for apple-touch-icon.png (rendered with Archivo loaded). Full bleed: iOS rounds the corners. -->
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="20%" r="100%">
+      <stop offset="0" stop-color="#1d1d22"/>
+      <stop offset="1" stop-color="#08080a"/>
+    </radialGradient>
+    <clipPath id="arm"><path d="M30 70 L146 42 L151 62 L35 90 Z"/></clipPath>
+  </defs>
+  <rect width="180" height="180" fill="url(#bg)"/>
+  <!-- clapper arm: volt and black stripes -->
+  <g clip-path="url(#arm)">
+    <rect x="0" y="0" width="180" height="180" fill="#0b0b0d"/>
+    <g fill="#c8f03a">
+      <path d="M30 40 h18 l-14 60 h-18z"/><path d="M64 40 h18 l-14 60 h-18z"/><path d="M98 40 h18 l-14 60 h-18z"/><path d="M132 40 h18 l-14 60 h-18z"/>
+    </g>
+  </g>
+  <path d="M30 70 L146 42 L151 62 L35 90 Z" fill="none" stroke="#c8f03a" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- slate -->
+  <rect x="30" y="96" width="121" height="50" rx="4" fill="#f3efe4"/>
+  <circle cx="47" cy="121" r="7.5" fill="#e5332a"/>
+  <text x="62" y="131" font-family="Archivo, sans-serif" font-weight="900" font-size="27" font-stretch="125%" letter-spacing="-.5" fill="#0b0b0d">CUT</text>
+</svg>
