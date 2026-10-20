@@ -27,10 +27,10 @@ with sync_playwright() as p:
         page.goto(base + "/tests/blank.html")
         page.evaluate("s => localStorage.setItem('cut.state.v1', s)", json.dumps(state))
         page.goto(link)
-        page.wait_for_selector(".toast", timeout=5000)
-        toast = page.inner_text(".toast")
-        if "Renpho weigh-in logged: 82.4 kg · 18.2% fat" not in toast or "isn't synced" not in toast:
-            fails.append(f"{name}: toast {toast!r}")
+        page.wait_for_selector(".renpho-connect", timeout=5000)
+        card = page.inner_text(".renpho-connect")
+        if "got 82.4 kg · 18.2% fat from renpho" not in card.lower() or "isn't connected" not in card:
+            fails.append(f"{name}: connect card {card!r}")
         if not page.url.endswith("#/scope"):
             fails.append(f"{name}: url {page.url}")
         rec = page.evaluate(f"() => JSON.parse(localStorage.getItem('cut.state.v1')).weights['{yday}']")
@@ -51,8 +51,8 @@ with sync_playwright() as p:
         page.goto(link)
         page.wait_for_timeout(600)
         after = page.evaluate(f"() => JSON.parse(localStorage.getItem('cut.state.v1')).weights['{yday}'].updatedAt")
-        if before != after or "Already logged" not in page.inner_text(".toast-wrap, body"):
-            fails.append(f"{name}: repeat link wrote again or no 'Already logged'")
+        if before != after:
+            fails.append(f"{name}: repeat link wrote again")
         page.goto(base + "/#/weigh?kg=Weight&fat=18")
         page.wait_for_selector(".renpho-debug", timeout=4000)
         if "kg=Weight&fat=18" not in page.inner_text(".renpho-debug"):
@@ -68,6 +68,62 @@ with sync_playwright() as p:
         page.wait_for_timeout(300)
         page.screenshot(path=f"tests/out/renpho-scope-{name}.png", full_page=False)
         ctx.close()
+    # A fresh Safari (not connected, never set up) gets the link: plain explanation + paste the setup link → it syncs.
+    TOKEN, REPO = "github_pat_FAKE", "tomkeogh98/the-cut-data"
+    FILES = {"data.json": json.dumps({**state, "weights": {}}).encode()}
+
+    def fake(route):
+        import base64
+        import hashlib
+        req, cors = route.request, {"Access-Control-Allow-Origin": "*"}
+        url = req.url.split("?")[0]
+        prefix = f"https://api.github.com/repos/{REPO}"
+        sha = lambda d: hashlib.sha1(d).hexdigest()  # noqa: E731
+        if req.headers.get("authorization") != f"Bearer {TOKEN}":
+            return route.fulfill(status=401, json={"message": "Bad credentials"}, headers=cors)
+        if url == prefix:
+            return route.fulfill(json={"full_name": REPO, "private": True, "permissions": {"push": True}}, headers=cors)
+        path = url[len(prefix) + len("/contents/"):]
+        if req.method == "GET":
+            if path not in FILES:
+                return route.fulfill(status=404, json={"message": "Not Found"}, headers=cors)
+            if "raw" in (req.headers.get("accept") or ""):
+                return route.fulfill(body=FILES[path], headers=cors)
+            return route.fulfill(json={"sha": sha(FILES[path]), "content": base64.b64encode(FILES[path]).decode()}, headers=cors)
+        if req.method == "PUT":
+            body = json.loads(req.post_data)
+            if path in FILES and body.get("sha") != sha(FILES[path]):
+                return route.fulfill(status=409, json={"message": "sha mismatch"}, headers=cors)
+            FILES[path] = base64.b64decode(body["content"])
+            return route.fulfill(status=201, json={"content": {"sha": sha(FILES[path])}}, headers=cors)
+        return route.fulfill(status=405, headers=cors)
+
+    import base64 as b64
+    setup = f"{base}/#/pair/" + b64.b64encode(json.dumps({"r": REPO, "t": TOKEN}).encode()).decode().rstrip("=")
+    ctx = b.new_context(viewport={"width": 375, "height": 812})
+    ctx.route("https://api.github.com/**", fake)
+    safari = ctx.new_page()
+    safari.on("pageerror", lambda e: fails.append(f"safari pageerror: {e}"))
+    safari.goto(link)
+    safari.wait_for_selector(".renpho-connect", timeout=5000)
+    txt = safari.inner_text("#view")
+    if "got 82.4 kg · 18.2% fat from renpho" not in txt.lower() or "welcome" in txt.lower():
+        fails.append(f"safari: connect card wrong or onboarding shown: {txt[:200]!r}")
+    safari.fill("#pasteSetup input[name=link]", "https://example.com/nope")
+    safari.click("#pasteSetup button")
+    if "isn't a setup link" not in safari.inner_text("#pasteMsg"):
+        fails.append("safari: bad link not explained")
+    safari.fill("#pasteSetup input[name=link]", setup)
+    safari.click("#pasteSetup button")
+    safari.wait_for_function("() => location.hash === '#/scope' && window.__cut.store.sync.status === 'ok'", timeout=8000)
+    safari.wait_for_timeout(2500)  # let the debounced push land
+    remote = json.loads(FILES["data.json"])
+    rw = remote.get("weights", {}).get(yday) or {}
+    if rw.get("kg") != 82.4 or rw.get("source") != "renpho" or not (remote.get("profile") or {}).get("startKg"):
+        fails.append(f"safari: weigh-in didn't reach the repo or profile lost: {rw} / {remote.get('profile')}")
+    if "82.4" not in safari.inner_text(".hero-num, #view"):
+        fails.append("safari: scope doesn't show the weigh-in after connecting")
+    ctx.close()
     b.close()
 httpd.shutdown()
 for f in fails:

@@ -1,15 +1,15 @@
 // The Script (goals), Craft services (meals), the Programme (+ Hevy) and the Production office (settings).
-import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=10";
-import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=10";
-import { $, $$, context, toast } from "./ui.js?v=10";
-import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=10";
-import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=10";
-import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=10";
-import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=10";
-import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=10";
-import { scheduledType } from "./schedule.js?v=10";
-import { hevySyncNow } from "./app.js?v=10";
-import { devicesCard, wireDevices } from "./devices.js?v=10";
+import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=11";
+import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=11";
+import { $, $$, context, toast } from "./ui.js?v=11";
+import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=11";
+import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=11";
+import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=11";
+import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=11";
+import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=11";
+import { scheduledType } from "./schedule.js?v=11";
+import { hevySyncNow } from "./app.js?v=11";
+import { devicesCard, wireDevices } from "./devices.js?v=11";
 
 // ================= THE SCRIPT (goals) =================
 export function renderScript(view) {
@@ -245,6 +245,7 @@ function renpho() {
         <code class="renpho-link">${link}</code></li>
       <li>Add <b>Open URLs</b> with the Text.</li>
       <li><b>Automation</b> tab → New → App → <b>Renpho Health</b> → Is Closed → Run Immediately → your shortcut.</li>
+      <li>Run the shortcut once by hand and tap <b>Allow</b> for Health. Automations can't answer that prompt.</li>
     </ol>
     ${lastRenpho()}
     <p class="fine">The link opens in Safari, so connect The Cut there once with your setup link. Opening Renpho without weighing just re-sends the last weigh-in for its own date, which is ignored.</p>
