@@ -1,14 +1,14 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { esc, live, pad, prettyDate, reducedMotion } from "./util.js?v=11";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=11";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=11";
-import { renderSession, renderToday } from "./view-today.js?v=11";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=11";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=11";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=11";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=11";
-import { readWeighIn } from "./body.js?v=11";
-import { applyGuitar, syncGuitar } from "./guitar.js?v=11";
+import { esc, live, pad, prettyDate, reducedMotion } from "./util.js?v=12";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=12";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=12";
+import { renderSession, renderToday } from "./view-today.js?v=12";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=12";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=12";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=12";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=12";
+import { readWeighIn } from "./body.js?v=12";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=12";
 
 const ROUTES = {
   "": renderToday,
@@ -197,8 +197,26 @@ function weighFromLink(q) {
     setRec("weights", w.date, rec);
   }
   const what = `${w.kg} kg${w.fat != null ? ` · ${w.fat}% fat` : ""}`;
-  if (configured()) { toast(`${fresh ? "Renpho weigh-in logged" : "Already logged"}: ${what}, ${prettyDate(w.date)}.`); route(); return; }
+  if (configured()) { route(); renphoStatus(`${fresh ? "Renpho weigh-in logged" : "Already logged"}: ${what}, ${prettyDate(w.date)}.`); return; }
   connectHere(what);
+}
+
+// A plain box above the page saying what happened to the weigh-in, live until you navigate away.
+// It only says "Synced" once a sync that includes this weigh-in has finished.
+function renphoStatus(line) {
+  const box = $("#renphoStatus");
+  let done = false;
+  const draw = () => {
+    const s = store.sync;
+    const bad = s.status === "error";
+    box.className = `sync-banner renpho-status${bad ? " bad" : done ? " ok" : ""}`;
+    box.innerHTML = `<b>${esc(line)}</b> ${bad ? `<b>Sync failed:</b> ${esc(s.message)}` : done ? "Synced to your other devices ✓" : "Syncing…"}`;
+  };
+  box.hidden = false;
+  draw();
+  const off = store.subscribe(draw);
+  window.addEventListener("hashchange", () => { off(); box.hidden = true; }, { once: true });
+  syncNow().then(() => syncNow()).then(() => { done = store.sync.status === "ok"; draw(); });
 }
 
 // The Shortcut always opens Safari, whose storage is separate from The Cut on the home screen.

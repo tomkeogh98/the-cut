@@ -123,6 +123,19 @@ with sync_playwright() as p:
         fails.append(f"safari: weigh-in didn't reach the repo or profile lost: {rw} / {remote.get('profile')}")
     if "82.4" not in safari.inner_text(".hero-num, #view"):
         fails.append("safari: scope doesn't show the weigh-in after connecting")
+    # Now connected: the next weigh-in shows a status box above the page that ends on "Synced", and reaches the repo.
+    today_s = today.isoformat()
+    safari.goto(f"{base}/#/weigh?kg=82.1&unit=kg&fat=17.8&lean=67.5&at={today_s}T07:30:00%2B01:00")
+    safari.wait_for_function("() => /Synced to your other devices/.test(document.querySelector('#renphoStatus')?.innerText || '')", timeout=10000)
+    status = safari.inner_text("#renphoStatus")
+    if "Renpho weigh-in logged: 82.1 kg · 17.8% fat" not in status:
+        fails.append(f"safari: status box {status!r}")
+    if (json.loads(FILES["data.json"]).get("weights", {}).get(today_s) or {}).get("kg") != 82.1:
+        fails.append("safari: second weigh-in not in the repo")
+    safari.goto(base + "/#/")
+    safari.wait_for_timeout(300)
+    if safari.locator("#renphoStatus").is_visible():
+        fails.append("safari: status box didn't go away after navigating")
     ctx.close()
     b.close()
 httpd.shutdown()

@@ -1,15 +1,15 @@
 // The Script (goals), Craft services (meals), the Programme (+ Hevy) and the Production office (settings).
-import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=11";
-import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=11";
-import { $, $$, context, toast } from "./ui.js?v=11";
-import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=11";
-import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=11";
-import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=11";
-import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=11";
-import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=11";
-import { scheduledType } from "./schedule.js?v=11";
-import { hevySyncNow } from "./app.js?v=11";
-import { devicesCard, wireDevices } from "./devices.js?v=11";
+import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=12";
+import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=12";
+import { $, $$, context, toast } from "./ui.js?v=12";
+import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=12";
+import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=12";
+import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=12";
+import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=12";
+import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=12";
+import { scheduledType } from "./schedule.js?v=12";
+import { hevySyncNow } from "./app.js?v=12";
+import { devicesCard, wireDevices } from "./devices.js?v=12";
 
 // ================= THE SCRIPT (goals) =================
 export function renderScript(view) {

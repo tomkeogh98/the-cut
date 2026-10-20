@@ -616,6 +616,8 @@ a.wp-day[href]:hover { transform: translateY(-3px); }
 .sync-banner.bad { border-color: color-mix(in srgb, var(--miss) 55%, var(--line)); }
 .sync-banner[hidden] { display: none; }
 .sync-banner a { font-weight: 700; white-space: nowrap; color: var(--ink); }
+.renpho-status { display: block; border-color: var(--line-2); }
+.renpho-status.ok { border-color: color-mix(in srgb, var(--accent-text) 55%, var(--line)); }
 
 /* more sheet */
 .more-sheet nav { display: grid; gap: 8px; }

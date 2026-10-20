@@ -1,6 +1,6 @@
 // Tiny SVG line chart: raw points + a trend line, an optional goal line and projection,
 // with a snapping crosshair + tooltip (pointer and arrow keys).
-import { daysBetween, esc, parse, shortDate } from "./util.js?v=11";
+import { daysBetween, esc, parse, shortDate } from "./util.js?v=12";
 
 const NS = "http://www.w3.org/2000/svg";
 

@@ -1,18 +1,18 @@
 // Today (the call sheet), the session page, and first-run onboarding (the casting sheet).
-import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=11";
-import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=11";
-import { connectForm, wireConnectForm } from "./devices.js?v=11";
-import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=11";
-import { pickGreeting } from "./greetings.js?v=11";
-import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=11";
+import { addDays, esc, kg, live, mondayOf, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=12";
+import { configured, onboarded, profile, setRec, stamp, store, update } from "./store.js?v=12";
+import { connectForm, wireConnectForm } from "./devices.js?v=12";
+import { $, $$, celebrate, context, nudgeText, toast } from "./ui.js?v=12";
+import { pickGreeting } from "./greetings.js?v=12";
+import { buildsOn, plannedType, seasonInfo, SESSIONS, setsFor } from "./program.js?v=12";
 import {
   buildFrom, dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, nudgeCheck, previousDay, scheduledType, shiftFrom, shiftInto,
   trainedOn, typeOn, WATER_GOAL, weekSummary,
-} from "./schedule.js?v=11";
-import { lastPerformance } from "./hevy.js?v=11";
-import { guitarOn, guitarStatus } from "./guitar.js?v=11";
-import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=11";
-import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=11";
+} from "./schedule.js?v=12";
+import { lastPerformance } from "./hevy.js?v=12";
+import { guitarOn, guitarStatus } from "./guitar.js?v=12";
+import { ACTIVITY, cmToFtIn, DEFAULT_PROFILE, targets } from "./body.js?v=12";
+import { logWeight, openDayPanel, photoDialog } from "./view-track.js?v=12";
 
 let greeting = null; // one greeting per page load, so ticking boxes doesn't reshuffle it
 
