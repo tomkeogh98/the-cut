@@ -15,15 +15,20 @@ state = {"version": 1, "startDate": (t - timedelta(days=30)).isoformat(), "hevy"
          "profile": {"name": "Tom", "heightCm": 200.7, "birthday": "1998-08-04", "sex": "male", "goalKg": 90, "startKg": 97.8,
                      "activity": 1.55, "weighDays": [1, 4], "photoDay": 1, "why": "x", "updatedAt": 1},
          "weights": {typed: {"kg": 83.0, "source": "site", "_f": {"kg": 5}, "updatedAt": 5}}}
-MEASURES = [{"date": t.isoformat(), "weight_kg": 82.4, "fat_percent": 18.2, "lean_mass_kg": 67.1},
+MEASURES = [{"date": t.isoformat(), "weight_kg": 82.400000001, "fat_percent": 18.2, "lean_mass_kg": 67.1},
             {"date": typed, "weight_kg": 99.9, "fat_percent": 18.6, "lean_mass_kg": 67.4}]
+OLDER = [{"date": "2026-03-01", "weight_kg": 97.0}]
+requested = []
 
 
 def fake_hevy(route):
     cors = {"Access-Control-Allow-Origin": "*"}
     url = route.request.url
     if "/body_measurements" in url:
-        return route.fulfill(json={"page": 1, "page_count": 1, "body_measurements": MEASURES}, headers=cors)
+        requested.append(url)
+        if "page=2" in url:
+            return route.fulfill(json={"page": 2, "page_count": 2, "body_measurements": OLDER}, headers=cors)
+        return route.fulfill(json={"page": 1, "page_count": 2, "body_measurements": MEASURES}, headers=cors)
     if "/workouts/events" in url:
         return route.fulfill(json={"page": 1, "page_count": 1, "events": []}, headers=cors)
     return route.fulfill(json={}, headers=cors)
@@ -38,7 +43,7 @@ with sync_playwright() as p:
     page.on("pageerror", lambda e: fails.append(f"pageerror: {e}"))
     page.goto(base + "/tests/blank.html")
     page.evaluate("([s, st]) => { localStorage.setItem('cut.state.v1', s); localStorage.setItem('cut.settings.v1', st); }",
-                  [json.dumps(state), json.dumps({"hevyKey": "fake-key", "repo": "", "token": ""})])
+                  [json.dumps(state), json.dumps({"hevyKey": "fake-key", "repo": "", "token": "", "hevyLast": int(__import__("time").time() * 1000) - 2 * 60 * 1000})])
     page.goto(base + "/#/scope")
     page.wait_for_function(f"() => window.__cut.store.state.weights['{t.isoformat()}']", timeout=8000)
     page.wait_for_timeout(500)
@@ -52,6 +57,10 @@ with sync_playwright() as p:
         if page.locator(".finish").count():
             page.locator(".finish").first.click(force=True)
             page.wait_for_timeout(150)
+    if any("page=2" in u for u in requested):
+        fails.append("kept paging after reaching a day it already had")
+    if "2026-03-01" in w:
+        fails.append("pulled an older page it didn't need")
     hero = page.inner_text(".hero-num")
     if "18.2%" not in hero or "67.1 kg lean" not in hero or "20.5" not in hero:
         fails.append(f"hero: {hero!r}")

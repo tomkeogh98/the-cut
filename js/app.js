@@ -1,13 +1,13 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=13";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=13";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=13";
-import { renderSession, renderToday } from "./view-today.js?v=13";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=13";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=13";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=13";
-import { pullWeights, pullWorkouts, weighInFromHevy } from "./hevy.js?v=13";
-import { applyGuitar, syncGuitar } from "./guitar.js?v=13";
+import { pad, reducedMotion } from "./util.js?v=14";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=14";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=14";
+import { renderSession, renderToday } from "./view-today.js?v=14";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=14";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=14";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=14";
+import { pullWeights, pullWorkouts, weighInFromHevy } from "./hevy.js?v=14";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=14";
 
 const ROUTES = {
   "": renderToday,
@@ -93,11 +93,12 @@ function checkMilestones() {
 export async function hevySyncNow(force = false) {
   const st = store.settings;
   if (!st.hevyKey) return;
-  if (!force && st.hevyLast && Date.now() - st.hevyLast < 15 * 60 * 1000) return;
+  // Every open / return to the app checks Hevy (at most once a minute), so a scale weigh-in shows up straight away.
+  if (!force && st.hevyLast && Date.now() - st.hevyLast < 60 * 1000) return;
   store.hevySync = { status: "syncing", message: "Syncing with Hevy…" };
   try {
     const { workouts, since } = await pullWorkouts(st.hevyKey, st.hevySince);
-    const weights = await pullWeights(st.hevyKey).catch(() => ({}));
+    const weights = await pullWeights(st.hevyKey, store.state.weights).catch(() => ({}));
     const changed = Object.keys(workouts).length || Object.entries(weights).some(([d, m]) => weighInFromHevy(store.state.weights[d], m));
     if (changed) {
       update((s) => {

@@ -1,7 +1,7 @@
 // Hevy integration: pull workouts + body weight from the Hevy API (needs Hevy Pro),
 // push the programme as routines, or import Hevy's CSV export. The API allows browser calls (CORS *).
-import { fmt, live } from "./util.js?v=13";
-import { LIFTS, SESSIONS } from "./program.js?v=13";
+import { fmt, live } from "./util.js?v=14";
+import { LIFTS, SESSIONS } from "./program.js?v=14";
 
 const BASE = "https://api.hevyapp.com/v1";
 export const cleanKey = (v) => String(v || "").toLowerCase().replace(/[^0-9a-f-]/g, "");
@@ -72,19 +72,23 @@ export async function pullWorkouts(key, since) {
   return { workouts: out, since: stamp };
 }
 
-export async function pullWeights(key) {
+// Body measurements come newest first, so stop at the first page holding a day we already have:
+// a fresh weigh-in costs one request, and only a first sync walks the whole history.
+const tenth = (v) => (v == null ? null : Math.round(Number(v) * 10) / 10);
+export async function pullWeights(key, known = {}) {
   const out = {};
-  let page = 1, pages = 1;
+  let page = 1, pages = 1, caughtUp = false;
   do {
     const res = await call(key, `/body_measurements?page=${page}&pageSize=10`);
     if (res.status === 404) break;
     const body = await json(res);
     pages = body.page_count || 1;
     for (const m of body.body_measurements || []) {
-      if (m.weight_kg) out[m.date] = { kg: Number(m.weight_kg), fat: m.fat_percent ?? null, lean: m.lean_mass_kg ?? null };
+      if (known[m.date]) caughtUp = true;
+      if (m.weight_kg) out[m.date] = { kg: tenth(m.weight_kg), fat: tenth(m.fat_percent), lean: tenth(m.lean_mass_kg) };
     }
     page++;
-  } while (page <= pages && page <= 30);
+  } while (!caughtUp && page <= pages && page <= 30);
   return out;
 }
 

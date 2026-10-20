@@ -1,6 +1,6 @@
 // The training programme: four lifting sessions (upper/lower split) + Oxford Run Club.
 // Exercise names match Hevy's built-in library so workouts can be read and routines pushed.
-import { daysBetween, mondayOf, weekday } from "./util.js?v=13";
+import { daysBetween, mondayOf, weekday } from "./util.js?v=14";
 
 // lift keys feed the goals engine; `hevy` lists Hevy titles to match (first is preferred).
 export const SESSIONS = {
