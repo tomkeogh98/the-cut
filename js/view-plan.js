@@ -1,15 +1,15 @@
 // The Script (goals), Craft services (meals), the Programme (+ Hevy) and the Production office (settings).
-import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=12";
-import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=12";
-import { $, $$, context, toast } from "./ui.js?v=12";
-import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=12";
-import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=12";
-import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=12";
-import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=12";
-import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=12";
-import { scheduledType } from "./schedule.js?v=12";
-import { hevySyncNow } from "./app.js?v=12";
-import { devicesCard, wireDevices } from "./devices.js?v=12";
+import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=13";
+import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=13";
+import { $, $$, context, toast } from "./ui.js?v=13";
+import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=13";
+import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=13";
+import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=13";
+import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=13";
+import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=13";
+import { scheduledType } from "./schedule.js?v=13";
+import { hevySyncNow } from "./app.js?v=13";
+import { devicesCard, wireDevices } from "./devices.js?v=13";
 
 // ================= THE SCRIPT (goals) =================
 export function renderScript(view) {
@@ -223,35 +223,6 @@ export function renderProgram(view) {
 }
 
 // ================= PRODUCTION OFFICE (settings) =================
-// Renpho → Apple Health → an iPhone Shortcut that opens a #/weigh link (see app.js weighFromLink).
-function lastRenpho() {
-  let l = null;
-  try { l = JSON.parse(localStorage.getItem("cut.renpho.last")); } catch { /* ignore */ }
-  if (!l) return `<p class="fine"><b>This browser hasn't received a Renpho link yet.</b> If the Shortcut ran, it opened somewhere else (or not at all).</p>`;
-  const when = new Date(l.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
-  return `<p class="fine"><b>Last Renpho link here:</b> ${esc(when)}, ${l.ok ? "logged fine" : "<b>couldn't read a weight</b>"}.</p>
-    <code class="renpho-link">${esc(decodeURIComponent(l.raw.replace(/\+/g, " ")) || "(empty)")}</code>`;
-}
-
-function renpho() {
-  const link = `${location.origin}${location.pathname}#/weigh?kg=<b>Weight·Value</b>&amp;unit=<b>Weight·Unit</b>&amp;fat=<b>Body Fat·Value</b>&amp;lean=<b>Lean·Value</b>&amp;at=<b>Weight·Start Date</b>`;
-  return `<section class="card renpho">
-    <h2>Renpho scale</h2>
-    <p>Step on the scale and the weigh-in lands here by itself: Renpho → Apple Health → a Shortcut → The Cut. Weight, body fat % and lean mass; BMI is worked out from your height. Set it up once on your iPhone:</p>
-    <ol class="fine steps">
-      <li><b>Health</b> app → your picture → Apps → <b>Renpho Health</b> → Turn On All.</li>
-      <li><b>Shortcuts</b> → new shortcut. Add three <b>Find Health Samples</b> actions: <b>Weight</b>, <b>Body Fat Percentage</b> and <b>Lean Body Mass</b>, each sorted by Start Date, Latest First, Limit 1.</li>
-      <li>Add a <b>Text</b> action with the link below. For each bold part, insert that action's result, tap it and pick the detail (Value, Unit or Start Date). Set Start Date's format to <b>ISO 8601</b>.
-        <code class="renpho-link">${link}</code></li>
-      <li>Add <b>Open URLs</b> with the Text.</li>
-      <li><b>Automation</b> tab → New → App → <b>Renpho Health</b> → Is Closed → Run Immediately → your shortcut.</li>
-      <li>Run the shortcut once by hand and tap <b>Allow</b> for Health. Automations can't answer that prompt.</li>
-    </ol>
-    ${lastRenpho()}
-    <p class="fine">The link opens in Safari, so connect The Cut there once with your setup link. Opening Renpho without weighing just re-sends the last weigh-in for its own date, which is ignored.</p>
-  </section>`;
-}
-
 export function renderOffice(view) {
   const p = profile(), st = store.settings;
   view.innerHTML = `
@@ -281,7 +252,6 @@ export function renderOffice(view) {
           <button class="btn" id="export">Download backup</button>
           <label class="file-drop">Restore backup<input type="file" id="import" accept="application/json,.json"></label>
         </section>
-        ${renpho()}
         <section class="card">
           <h2>Look</h2>
           <div class="pose-tabs">${["auto", "dark", "light"].map((t) => `<button class="chip${(localStorage.getItem("cut.theme") || "auto") === t ? " on" : ""}" data-theme="${t}">${t === "auto" ? "Match device" : t === "dark" ? "Edit suite (dark)" : "Call sheet (light)"}</button>`).join("")}</div>

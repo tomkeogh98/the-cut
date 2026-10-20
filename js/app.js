@@ -1,14 +1,13 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { esc, live, pad, prettyDate, reducedMotion } from "./util.js?v=12";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=12";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=12";
-import { renderSession, renderToday } from "./view-today.js?v=12";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=12";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=12";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=12";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=12";
-import { readWeighIn } from "./body.js?v=12";
-import { applyGuitar, syncGuitar } from "./guitar.js?v=12";
+import { pad, reducedMotion } from "./util.js?v=13";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=13";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=13";
+import { renderSession, renderToday } from "./view-today.js?v=13";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=13";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=13";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=13";
+import { pullWeights, pullWorkouts, weighInFromHevy } from "./hevy.js?v=13";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=13";
 
 const ROUTES = {
   "": renderToday,
@@ -28,10 +27,8 @@ let renderedRev = -1, pendingRender = false, quiet = false;
 const MORE = ["rushes", "craft", "program", "dailies", "office"];
 
 function route() {
-  const [path, query = ""] = location.hash.replace(/^#\/?/, "").split("?");
-  const [name, arg] = path.split("/");
+  const [name, arg] = location.hash.replace(/^#\/?/, "").split("/");
   if (name === "pair") { pairDevice(arg); return; }
-  if (name === "weigh") { weighFromLink(new URLSearchParams(query)); return; }
   $$("nav.tabs a, nav.bottom-tabs a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === `#/${name}` ? "page" : "false"));
   $("#moreBtn")?.setAttribute("aria-current", MORE.includes(name) ? "page" : "false");
   view.dataset.route = name || "today";
@@ -101,15 +98,15 @@ export async function hevySyncNow(force = false) {
   try {
     const { workouts, since } = await pullWorkouts(st.hevyKey, st.hevySince);
     const weights = await pullWeights(st.hevyKey).catch(() => ({}));
-    const changed = Object.keys(workouts).length || Object.keys(weights).some((d) => !store.state.weights[d]);
+    const changed = Object.keys(workouts).length || Object.entries(weights).some(([d, m]) => weighInFromHevy(store.state.weights[d], m));
     if (changed) {
       update((s) => {
         for (const [id, w] of Object.entries(workouts)) {
           const cur = s.hevy.workouts[id];
           if (!cur || (w.updatedAt || 0) >= (cur.updatedAt || 0)) s.hevy.workouts[id] = w;
         }
-        // Hevy weigh-ins only fill gaps; never overwrite one logged here.
-        for (const [d, v] of Object.entries(weights)) if (!s.weights[d]) s.weights[d] = { kg: v, source: "hevy", updatedAt: 1 };
+        // Hevy weigh-ins (your scale's, via Apple Health) only fill gaps; never overwrite one logged here.
+        for (const [d, m] of Object.entries(weights)) { const rec = weighInFromHevy(s.weights[d], m); if (rec) s.weights[d] = rec; }
       });
     }
     store.settings.hevySince = since;
@@ -172,79 +169,6 @@ async function pairDevice(code) {
     toast(e.message, "bad");
   }
   route();
-}
-
-// ---------- Renpho weigh-ins from the iPhone Shortcut (#/weigh?kg=…&unit=…&fat=…&lean=…&at=…) ----------
-function weighFromLink(q) {
-  history.replaceState(null, "", `${location.pathname}#/scope`);
-  const w = readWeighIn(q);
-  // Remember what arrived (this browser only), so a broken Shortcut can be debugged from Settings.
-  try { localStorage.setItem("cut.renpho.last", JSON.stringify({ at: Date.now(), raw: q.toString(), ok: Boolean(w) })); } catch { /* ignore */ }
-  if (!w) {
-    route();
-    view.insertAdjacentHTML("afterbegin", `<section class="card renpho-debug"><h2>The Renpho link didn't work</h2>
-      <p>It arrived, but there was no weight The Cut could read. This is exactly what the Shortcut sent:</p>
-      <code class="renpho-link">${esc(decodeURIComponent(q.toString().replace(/\+/g, " ")) || "(nothing after #/weigh)")}</code>
-      <p class="fine">Usually a Text variable is missing its detail (tap it and pick Value). Screenshot this for Claude if it's not obvious.</p></section>`);
-    return;
-  }
-  const prev = store.state.weights[w.date];
-  const fresh = !live(prev) || prev.kg !== w.kg || (prev.fat ?? null) !== w.fat;
-  if (fresh) {
-    const rec = { kg: w.kg, deleted: false, source: "renpho" };
-    if (w.fat != null) rec.fat = w.fat;
-    if (w.lean != null) rec.lean = w.lean;
-    setRec("weights", w.date, rec);
-  }
-  const what = `${w.kg} kg${w.fat != null ? ` · ${w.fat}% fat` : ""}`;
-  if (configured()) { route(); renphoStatus(`${fresh ? "Renpho weigh-in logged" : "Already logged"}: ${what}, ${prettyDate(w.date)}.`); return; }
-  connectHere(what);
-}
-
-// A plain box above the page saying what happened to the weigh-in, live until you navigate away.
-// It only says "Synced" once a sync that includes this weigh-in has finished.
-function renphoStatus(line) {
-  const box = $("#renphoStatus");
-  let done = false;
-  const draw = () => {
-    const s = store.sync;
-    const bad = s.status === "error";
-    box.className = `sync-banner renpho-status${bad ? " bad" : done ? " ok" : ""}`;
-    box.innerHTML = `<b>${esc(line)}</b> ${bad ? `<b>Sync failed:</b> ${esc(s.message)}` : done ? "Synced to your other devices ✓" : "Syncing…"}`;
-  };
-  box.hidden = false;
-  draw();
-  const off = store.subscribe(draw);
-  window.addEventListener("hashchange", () => { off(); box.hidden = true; }, { once: true });
-  syncNow().then(() => syncNow()).then(() => { done = store.sync.status === "ok"; draw(); });
-}
-
-// The Shortcut always opens Safari, whose storage is separate from The Cut on the home screen.
-// If this browser isn't connected, say so plainly and let the setup link be pasted right here.
-function connectHere(what) {
-  if (onboarded()) route(); else view.innerHTML = "";
-  view.insertAdjacentHTML("afterbegin", `<section class="card renpho-connect">
-    <h2>Got ${esc(what)} from Renpho</h2>
-    <p>But this browser isn't connected to The Cut yet, so the weigh-in can't reach your other devices. The Shortcut always opens Safari, which keeps its own storage, separate from The Cut on your home screen. Connect Safari once and every weigh-in after this goes straight through.</p>
-    <form id="pasteSetup">
-      <label>Setup link <input name="link" type="url" inputmode="url" autocomplete="off" placeholder="https://…/the-cut/#/pair/…" required></label>
-      <button class="btn primary">Connect Safari</button>
-      <p class="fine" id="pasteMsg" role="status"></p>
-    </form>
-    <p class="fine">Get the link from The Cut on your home screen or laptop: Settings → Copy setup link.</p>
-  </section>`);
-  $("#pasteSetup", view).addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const msg = $("#pasteMsg", view);
-    const p = readPairCode(String(new FormData(e.target).get("link")).split("#/pair/")[1] || "");
-    if (!p) { msg.textContent = "That isn't a setup link. Copy it again from Settings on another device."; return; }
-    msg.textContent = "Connecting…";
-    try {
-      await connectDevice(p.repo, p.token);
-      toast(`Safari is connected. ${what} is on its way to your other devices.`);
-      location.hash = "#/scope";
-    } catch (err) { msg.textContent = err.message; }
-  });
 }
 
 function drawBanner() {

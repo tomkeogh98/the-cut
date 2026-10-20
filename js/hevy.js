@@ -1,7 +1,7 @@
 // Hevy integration: pull workouts + body weight from the Hevy API (needs Hevy Pro),
 // push the programme as routines, or import Hevy's CSV export. The API allows browser calls (CORS *).
-import { fmt, live } from "./util.js?v=12";
-import { LIFTS, SESSIONS } from "./program.js?v=12";
+import { fmt, live } from "./util.js?v=13";
+import { LIFTS, SESSIONS } from "./program.js?v=13";
 
 const BASE = "https://api.hevyapp.com/v1";
 export const cleanKey = (v) => String(v || "").toLowerCase().replace(/[^0-9a-f-]/g, "");
@@ -80,10 +80,27 @@ export async function pullWeights(key) {
     if (res.status === 404) break;
     const body = await json(res);
     pages = body.page_count || 1;
-    for (const m of body.body_measurements || []) if (m.weight_kg) out[m.date] = Number(m.weight_kg);
+    for (const m of body.body_measurements || []) {
+      if (m.weight_kg) out[m.date] = { kg: Number(m.weight_kg), fat: m.fat_percent ?? null, lean: m.lean_mass_kg ?? null };
+    }
     page++;
   } while (page <= pages && page <= 30);
   return out;
+}
+
+// What a Hevy body measurement adds to that day's weigh-in, or null if nothing. A day with no weigh-in
+// gets Hevy's (stamped old, so anything logged here wins); a day that has one only gains body fat /
+// lean mass it's missing. Hevy never overwrites a weight, and never brings back a deleted day.
+export function weighInFromHevy(cur, m) {
+  const extra = {};
+  if (m.fat != null) extra.fat = Math.round(Number(m.fat) * 10) / 10;
+  if (m.lean != null) extra.lean = Math.round(Number(m.lean) * 10) / 10;
+  if (!cur) return { kg: m.kg, ...extra, source: "hevy", updatedAt: 1 };
+  if (cur.deleted) return null;
+  const add = Object.fromEntries(Object.entries(extra).filter(([k]) => cur[k] == null));
+  if (!Object.keys(add).length) return null;
+  const now = Date.now();
+  return { ...cur, ...add, _f: { ...(cur._f || {}), ...Object.fromEntries(Object.keys(add).map((k) => [k, now])) }, updatedAt: now };
 }
 
 // Create a weigh-in in Hevy. Never overwrites: Hevy's PUT nulls every other measurement on that date.

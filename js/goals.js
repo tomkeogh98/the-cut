@@ -1,9 +1,9 @@
 // Milestones: weight steps to the goal, lift targets that adapt to current strength, and habit milestones.
-import { addDays, daysBetween, live, today } from "./util.js?v=12";
-import { projectDate, weeklyRate, weightSeries, withTrend } from "./body.js?v=12";
-import { liftHistory, liftNow } from "./hevy.js?v=12";
-import { LIFTS, seasonInfo } from "./program.js?v=12";
-import { dayChecks, perfectStreak, trainedOn, weekSummary } from "./schedule.js?v=12";
+import { addDays, daysBetween, live, today } from "./util.js?v=13";
+import { projectDate, weeklyRate, weightSeries, withTrend } from "./body.js?v=13";
+import { liftHistory, liftNow } from "./hevy.js?v=13";
+import { LIFTS, seasonInfo } from "./program.js?v=13";
+import { dayChecks, perfectStreak, trainedOn, weekSummary } from "./schedule.js?v=13";
 
 // ---------- weight ----------
 export function weightStatus(state, profile, now = today()) {
