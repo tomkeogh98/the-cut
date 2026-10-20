@@ -1,16 +1,16 @@
 // Timeline (tracker), Scope (weight), Rushes (photos) and Dailies (journal).
-import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=8";
-import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=8";
-import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=8";
-import { lineChart, sparkline } from "./chart.js?v=8";
-import { projectDate, PHASE_COPY, phaseFor } from "./body.js?v=8";
-import { weightMilestones } from "./goals.js?v=8";
-import { SESSIONS } from "./program.js?v=8";
-import { pushWeight } from "./hevy.js?v=8";
+import { addDays, daysBetween, esc, kg, live, longDate, mondayOf, monthName, parse, prettyDate, shortDate, shortDay, today, uid } from "./util.js?v=9";
+import { compressImage, photoURL, profile, putPhoto, setRec, stamp, store, update } from "./store.js?v=9";
+import { $, $$, celebrate, context, modal, toast } from "./ui.js?v=9";
+import { lineChart, sparkline } from "./chart.js?v=9";
+import { bmi, projectDate, PHASE_COPY, phaseFor } from "./body.js?v=9";
+import { weightMilestones } from "./goals.js?v=9";
+import { SESSIONS } from "./program.js?v=9";
+import { pushWeight } from "./hevy.js?v=9";
 import {
   dayChecks, dayStatus, excuseOn, hevyOn, lockedBy, REASONS, scheduledType, sessionsOn, shiftCheck, shiftFrom, shiftInto,
   slackReport, streak, trainedOn, typeOn, weekSummary,
-} from "./schedule.js?v=8";
+} from "./schedule.js?v=9";
 
 const STATUS_LABEL = {
   done: "Trained", off: "Not scheduled", missed: "Missed", broken: "Missed (rule broken)", moved: "Moved",
@@ -175,6 +175,7 @@ export function renderScope(view) {
   const delta = ws.current != null && ws.start != null ? ws.current - ws.start : null;
   const ms = weightMilestones(ws, now);
   const next = ms.find((m) => !m.done);
+  const lastFat = [...ws.series].reverse().find((r) => r.fat != null);
   const pct = ws.start != null && ws.current != null && ws.start !== p.goalKg ? Math.max(0, Math.min(100, ((ws.start - ws.current) / (ws.start - p.goalKg)) * 100)) : 0;
   view.innerHTML = `
     <section class="page-head">
@@ -192,6 +193,8 @@ export function renderScope(view) {
           <div><dt>To go</dt><dd>${c.togo == null ? "—" : `${c.togo} kg`}</dd></div>
           <div><dt>Rate</dt><dd>${ws.rate == null ? "Need 2 weeks" : `${ws.rate > 0 ? "+" : ""}${ws.rate.toFixed(2)} kg/wk`}</dd></div>
           <div><dt>ETA</dt><dd>${due ? longDate(due) : "—"}</dd></div>
+          <div><dt>BMI</dt><dd>${ws.latest == null ? "—" : bmi(ws.latest, p.heightCm).toFixed(1)}</dd></div>
+          <div><dt>Body fat</dt><dd>${lastFat ? `${lastFat.fat.toFixed(1)}%${lastFat.lean != null ? ` · ${kg(lastFat.lean)} kg lean` : ""}` : "—"}</dd></div>
         </dl>
         <p class="fine">Phase: <b>${PHASE_COPY[phase].label}</b>, ${PHASE_COPY[phase].line}.${next ? ` Next milestone: <b>${esc(next.title)}</b>${next.due ? `, around ${shortDate(next.due)}` : ""}.` : ""}</p>
       </section>
@@ -201,6 +204,7 @@ export function renderScope(view) {
         <label>Weight (kg) <input type="number" name="kg" step="0.1" min="40" max="250" inputmode="decimal" placeholder="${ws.latest ?? ""}" required></label>
         <button class="btn primary" type="submit">Log it</button>
         ${store.settings.hevyKey ? `<p class="fine">Also saved to Hevy's body measurements.</p>` : ""}
+        <p class="fine">Renpho weigh-ins can arrive by themselves: <a href="#/office">set up the Shortcut</a>.</p>
       </form>
     </div>
     <section class="card">
@@ -208,8 +212,8 @@ export function renderScope(view) {
       ${ws.before ? `<div class="pose-tabs" role="group" aria-label="Range"><button class="chip${showAll ? "" : " on"}" data-range="cut">Since day one</button><button class="chip${showAll ? " on" : ""}" data-range="all">All history (+${ws.before} older)</button></div>` : ""}
       <div id="wchart"></div>
       <details class="table-view"><summary>Table view</summary>
-        <table><thead><tr><th>Date</th><th>Weigh-in</th><th>Trend</th><th></th></tr></thead><tbody>
-        ${[...ws.series].reverse().map((r) => `<tr><td>${prettyDate(r.date)}</td><td>${kg(r.kg)}</td><td>${kg(r.trend, 2)}</td><td><button class="link" data-del="${r.date}">delete</button></td></tr>`).join("") || `<tr><td colspan="4">No weigh-ins yet.</td></tr>`}
+        <table><thead><tr><th>Date</th><th>Weigh-in</th><th>Trend</th><th>Fat</th><th>Lean</th><th></th></tr></thead><tbody>
+        ${[...ws.series].reverse().map((r) => `<tr><td>${shortDay(r.date)} ${shortDate(r.date)}</td><td>${kg(r.kg)}</td><td>${kg(r.trend, 2)}</td><td>${r.fat == null ? "—" : `${r.fat.toFixed(1)}%`}</td><td>${kg(r.lean)}</td><td><button class="link" data-del="${r.date}">delete</button></td></tr>`).join("") || `<tr><td colspan="6">No weigh-ins yet.</td></tr>`}
         </tbody></table>
       </details>
     </section>`;

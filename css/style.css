@@ -451,12 +451,14 @@ ul.tips { padding-left: 18px; color: var(--ink-2); font-size: .92rem; }
 .c-tip i { width: 12px; display: inline-block; }
 .c-tip i.k-line { height: 2px; background: var(--accent); }
 .c-tip i.k-dot { height: 8px; width: 8px; border-radius: 50%; background: var(--chart-dot); margin: 0 2px; }
-.table-view { margin-top: 16px; }
+.table-view { margin-top: 16px; overflow-x: auto; }
 .table-view summary { cursor: pointer; font: 500 expanded .72rem var(--f-label); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
 .table-view table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .92rem; }
 .table-view th, .table-view td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.table-view td:first-child { white-space: nowrap; }
 .table-view th { font: 500 expanded .66rem var(--f-label); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
-.table-view td:nth-child(2), .table-view td:nth-child(3) { font-family: var(--f-label); font-stretch: 125%; font-variant-numeric: tabular-nums; }
+.table-view td:nth-child(2), .table-view td:nth-child(3), .table-view td:nth-child(4), .table-view td:nth-child(5) { font-family: var(--f-label); font-stretch: 125%; font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .table-view table { font-size: .84rem; } .table-view th, .table-view td { padding: 7px 5px; } .table-view th:nth-child(3), .table-view td:nth-child(3) { display: none; } }
 
 /* ---------------- rushes (photos) ---------------- */
 .compare { position: relative; aspect-ratio: 3 / 4; max-height: 72vh; max-width: 560px; background: #000; overflow: hidden; border-radius: var(--r-lg); --cut: 50%; }
@@ -581,6 +583,8 @@ a.wp-day[href]:hover { transform: translateY(-3px); }
 .office-grid { display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr); align-items: start; }
 .office-grid > div { display: grid; gap: 20px; align-content: start; }
 .steps { padding-left: 18px; }
+.renpho-link { display: block; margin: 8px 0 2px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-sm); font: 500 .74rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; color: var(--ink-2); }
+.renpho-link b { color: var(--accent-text); font-weight: 700; }
 .casting-form .cast-grid { display: grid; gap: 0 18px; grid-template-columns: minmax(0, 1fr); }
 .devices h3.label { margin-top: 18px; }
 .sync-ok { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }

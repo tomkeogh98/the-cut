@@ -1,13 +1,14 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { pad, reducedMotion } from "./util.js?v=8";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=8";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=8";
-import { renderSession, renderToday } from "./view-today.js?v=8";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=8";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=8";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=8";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=8";
-import { applyGuitar, syncGuitar } from "./guitar.js?v=8";
+import { live, pad, prettyDate, reducedMotion } from "./util.js?v=9";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=9";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=9";
+import { renderSession, renderToday } from "./view-today.js?v=9";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=9";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=9";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=9";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=9";
+import { readWeighIn } from "./body.js?v=9";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=9";
 
 const ROUTES = {
   "": renderToday,
@@ -27,8 +28,10 @@ let renderedRev = -1, pendingRender = false, quiet = false;
 const MORE = ["rushes", "craft", "program", "dailies", "office"];
 
 function route() {
-  const [name, arg] = location.hash.replace(/^#\/?/, "").split("/");
+  const [path, query = ""] = location.hash.replace(/^#\/?/, "").split("?");
+  const [name, arg] = path.split("/");
   if (name === "pair") { pairDevice(arg); return; }
+  if (name === "weigh") { weighFromLink(new URLSearchParams(query)); return; }
   $$("nav.tabs a, nav.bottom-tabs a").forEach((a) => a.setAttribute("aria-current", a.getAttribute("href") === `#/${name}` ? "page" : "false"));
   $("#moreBtn")?.setAttribute("aria-current", MORE.includes(name) ? "page" : "false");
   view.dataset.route = name || "today";
@@ -167,6 +170,26 @@ async function pairDevice(code) {
     toast("This device is connected. Everything's in sync. 🎬");
   } catch (e) {
     toast(e.message, "bad");
+  }
+  route();
+}
+
+// ---------- Renpho weigh-ins from the iPhone Shortcut (#/weigh?kg=…&unit=…&fat=…&lean=…&at=…) ----------
+function weighFromLink(q) {
+  history.replaceState(null, "", `${location.pathname}#/scope`);
+  const w = readWeighIn(q);
+  if (!w) toast("That weigh-in link had no weight in it. Check the Renpho Shortcut.", "bad");
+  else {
+    const prev = store.state.weights[w.date];
+    const fresh = !live(prev) || prev.kg !== w.kg || (prev.fat ?? null) !== w.fat;
+    if (fresh) {
+      const rec = { kg: w.kg, deleted: false, source: "renpho" };
+      if (w.fat != null) rec.fat = w.fat;
+      if (w.lean != null) rec.lean = w.lean;
+      setRec("weights", w.date, rec);
+    }
+    const what = `${w.kg} kg${w.fat != null ? ` · ${w.fat}% fat` : ""}`;
+    toast(`${fresh ? "Renpho weigh-in logged" : "Already logged"}: ${what}, ${prettyDate(w.date)}.${configured() ? "" : " This browser isn't synced yet: open your setup link here once."}`);
   }
   route();
 }

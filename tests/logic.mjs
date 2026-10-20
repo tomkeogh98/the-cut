@@ -70,3 +70,17 @@ const tomb = { deleted: true, _f: { deleted: 400 }, updatedAt: 400 };
 console.log('mergeRec tombstone', ST.mergeRec(phone, tomb).deleted === true ? 'OK' : 'FAIL');
 ST.saveSettings({ token: 'github_pat_TEST' }); const code = ST.pairLink().split('#/pair/')[1];
 console.log('pair roundtrip', JSON.stringify(ST.readPairCode(code)), ST.readPairCode('garbage') === null ? 'OK' : 'FAIL');
+// Renpho weigh-ins via the iPhone Shortcut link
+const must = (cond, msg) => { if (!cond) throw new Error('renpho: ' + msg); };
+must(B.parseMass('82.4') === 82.4 && B.parseMass('82.4 kg') === 82.4 && B.parseMass('82,4') === 82.4, 'kg forms');
+must(B.parseMass('181.6 lb') === 82.4 && B.parseMass('181.6', 'lb') === 82.4, 'lb');
+must(B.parseMass('12 st 13.6 lb') === 82.4 && B.parseMass('12.97', 'st') === 82.4, `stones (${B.parseMass('12.97', 'st')})`);
+must(B.parsePct('18.2') === 18.2 && B.parsePct('18.2 %') === 18.2 && B.parsePct('0.182') === 18.2 && B.parsePct('') === null && B.parsePct('95') === null, 'body fat');
+const q = (s) => new URLSearchParams(s);
+let w = B.readWeighIn(q('kg=82.4&unit=kg&fat=0.182&lean=67.1&at=2026-10-19T07:31:02+01:00'), '2026-10-20');
+must(w.date === '2026-10-19' && w.kg === 82.4 && w.fat === 18.2 && w.lean === 67.1, JSON.stringify(w));
+must(B.readWeighIn(q('kg=82.4'), '2026-10-20').date === '2026-10-20', 'no date → today');
+must(B.readWeighIn(q('kg=82.4&at=2026-12-01'), '2026-10-20').date === '2026-10-20', 'future date → today');
+must(B.readWeighIn(q('fat=18'), '2026-10-20') === null && B.readWeighIn(q('kg=5'), '2026-10-20') === null, 'junk rejected');
+must(B.readWeighIn(q('kg=82.4&lean=95'), '2026-10-20').lean === null, 'lean above weight dropped');
+console.log('renpho OK');

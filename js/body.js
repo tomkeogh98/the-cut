@@ -1,5 +1,5 @@
 // Body maths: age, BMR, calorie & macro targets, weight trend and projections.
-import { addDays, daysBetween, live, parse, today } from "./util.js?v=8";
+import { addDays, daysBetween, live, parse, today } from "./util.js?v=9";
 
 export const DEFAULT_PROFILE = {
   name: "Tom",
@@ -71,8 +71,36 @@ export const bmi = (kgV, cm) => kgV / ((cm / 100) ** 2);
 export function weightSeries(state) {
   return Object.entries(state.weights || {})
     .filter(([, w]) => live(w) && w.kg > 0)
-    .map(([date, w]) => ({ date, kg: Number(w.kg) }))
+    .map(([date, w]) => ({ date, kg: Number(w.kg), fat: w.fat ?? null, lean: w.lean ?? null }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+// ---------- Renpho weigh-ins (scale → Apple Health → iPhone Shortcut → #/weigh link) ----------
+// Shortcuts hands values over as "82.4", "82.4 kg", "181.6 lb", "12 st 13.6 lb", or a number plus a separate unit.
+const LB = 0.45359237, ST = 6.35029318;
+export function parseMass(value, unit = "") {
+  const s = `${value ?? ""} ${unit ?? ""}`.toLowerCase().replace(/,/g, ".");
+  const num = (re) => { const m = s.match(re); return m ? parseFloat(m[1]) : null; };
+  const st = num(/(\d+(?:\.\d+)?)\s*st/), lb = num(/(\d+(?:\.\d+)?)\s*(?:lb|pound)/);
+  const kgV = st != null || lb != null ? (st || 0) * ST + (lb || 0) * LB : num(/(\d+(?:\.\d+)?)/);
+  return kgV > 0 ? Math.round(kgV * 10) / 10 : null;
+}
+// Body fat arrives as "18.2", "18.2%" or a fraction (0.182).
+export function parsePct(value) {
+  const m = String(value ?? "").replace(/,/g, ".").match(/(\d+(?:\.\d+)?)/);
+  if (!m) return null;
+  const v = parseFloat(m[1]) * (parseFloat(m[1]) <= 1 ? 100 : 1);
+  return v >= 2 && v <= 70 ? Math.round(v * 10) / 10 : null;
+}
+// The weigh-in a #/weigh link describes, or null. `at` is the Health sample's start date (ISO 8601, local time),
+// so re-opening Renpho on a later day re-sends the old weigh-in for its own date, not today's.
+export function readWeighIn(q, now = today()) {
+  const kgV = parseMass(q.get("kg"), q.get("unit"));
+  if (!(kgV > 30 && kgV < 300)) return null;
+  const at = String(q.get("at") || "").slice(0, 10);
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(at) && at <= now ? at : now;
+  const lean = parseMass(q.get("lean"), q.get("unit"));
+  return { date, kg: kgV, fat: parsePct(q.get("fat")), lean: lean > 20 && lean < kgV ? lean : null };
 }
 
 // Exponentially-weighted trend that smooths out day-to-day water-weight noise.

@@ -6,7 +6,7 @@ Live at https://tomkeogh98.github.io/the-cut/
 
 - **Today (call sheet):** a different greeting every visit; what happened last time, today's session and how it builds on it; the daily list (train, 4 L water, guitar, read 30 min, journal, plus weigh-in and photo days); the journal.
 - **Timeline:** green = trained, grey = not scheduled, red = scheduled and missed. Move or excuse sessions under the rules (5 a week, no skipping the day after a move, no back-to-back moves).
-- **Weight:** trend weight, chart, projection to 90 kg.
+- **Weight:** trend weight, chart, projection to 90 kg, BMI, body fat and lean mass. Renpho weigh-ins arrive by themselves: Renpho → Apple Health → an iPhone Shortcut that opens `#/weigh?kg=…&unit=…&fat=…&lean=…&at=…` (setup steps in Settings).
 - **Photos:** progress photos with a before/after slider.
 - **Goals:** weight milestones, lift targets built from real Hevy numbers, habit milestones.
 - **Meals:** BMR/TDEE-based targets and scalable meal cards.
@@ -22,4 +22,5 @@ The site is served from the `gh-pages` branch. Bump `?v=N` on every CSS/JS refer
 PY=~/Library/Caches/claude-playwright/venv/bin/python
 $PY tests/run_logic.py   # schedule / body / meals / goals / Hevy logic
 $PY tests/smoke.py       # end-to-end in Chrome + screenshots (tests/out/) at 375/1024/1440/1920, light & dark
+$PY tests/renpho_test.py # the Renpho Shortcut link: units, body fat, its own date, no double logging
 ```
