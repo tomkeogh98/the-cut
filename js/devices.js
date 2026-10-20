@@ -1,7 +1,7 @@
 // Devices & sync: connect this device (token or setup link) and pair new ones (link / QR code).
-import { esc } from "./util.js?v=9";
-import { configured, connectDevice, pairLink, store, syncNow } from "./store.js?v=9";
-import { $, toast } from "./ui.js?v=9";
+import { esc } from "./util.js?v=10";
+import { configured, connectDevice, pairLink, store, syncNow } from "./store.js?v=10";
+import { $, toast } from "./ui.js?v=10";
 
 const QR_SRC = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js";
 const QR_SRI = "sha384-mZT2gIty7ZDdOGkxfP6joZcYdMW1Jvj9dRlfpTmaJAKKXTqzygtB22k7FLe+KZC1";

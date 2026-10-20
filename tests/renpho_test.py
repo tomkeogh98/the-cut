@@ -53,10 +53,14 @@ with sync_playwright() as p:
         after = page.evaluate(f"() => JSON.parse(localStorage.getItem('cut.state.v1')).weights['{yday}'].updatedAt")
         if before != after or "Already logged" not in page.inner_text(".toast-wrap, body"):
             fails.append(f"{name}: repeat link wrote again or no 'Already logged'")
-        page.goto(base + "/#/weigh?fat=18")
-        page.wait_for_timeout(400)
-        if "no weight" not in page.inner_text("body"):
-            fails.append(f"{name}: junk link not rejected")
+        page.goto(base + "/#/weigh?kg=Weight&fat=18")
+        page.wait_for_selector(".renpho-debug", timeout=4000)
+        if "kg=Weight&fat=18" not in page.inner_text(".renpho-debug"):
+            fails.append(f"{name}: debug card doesn't show what arrived: {page.inner_text('.renpho-debug')!r}")
+        page.goto(base + "/#/office")
+        page.wait_for_selector(".renpho")
+        if "couldn't read a weight" not in page.inner_text(".renpho") or "kg=Weight" not in page.inner_text(".renpho"):
+            fails.append(f"{name}: settings doesn't show the last link")
         page.goto(base + "/#/office")
         page.wait_for_selector(".renpho")
         page.locator(".renpho").screenshot(path=f"tests/out/renpho-card-{name}.png")

@@ -1,15 +1,15 @@
 // The Script (goals), Craft services (meals), the Programme (+ Hevy) and the Production office (settings).
-import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=9";
-import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=9";
-import { $, $$, context, toast } from "./ui.js?v=9";
-import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=9";
-import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=9";
-import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=9";
-import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=9";
-import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=9";
-import { scheduledType } from "./schedule.js?v=9";
-import { hevySyncNow } from "./app.js?v=9";
-import { devicesCard, wireDevices } from "./devices.js?v=9";
+import { esc, kg, live, longDate, shortDate, today } from "./util.js?v=10";
+import { exportJSON, importJSON, profile, saveSettings, setHevyKey, stamp, store, update } from "./store.js?v=10";
+import { $, $$, context, toast } from "./ui.js?v=10";
+import { habitGoals, level, liftGoals, weightMilestones } from "./goals.js?v=10";
+import { ACTIVITY, age, bmi, cmToFtIn, PHASE_COPY, targets } from "./body.js?v=10";
+import { dayPlan, MEALS, nextOption, portion, scaleMeal, SLOTS } from "./meals.js?v=10";
+import { DEFAULT_WEEK, LIFTS, PHASES, seasonInfo, SESSIONS } from "./program.js?v=10";
+import { cleanKey, importCSV, pushRoutines, testKey } from "./hevy.js?v=10";
+import { scheduledType } from "./schedule.js?v=10";
+import { hevySyncNow } from "./app.js?v=10";
+import { devicesCard, wireDevices } from "./devices.js?v=10";
 
 // ================= THE SCRIPT (goals) =================
 export function renderScript(view) {
@@ -224,6 +224,15 @@ export function renderProgram(view) {
 
 // ================= PRODUCTION OFFICE (settings) =================
 // Renpho → Apple Health → an iPhone Shortcut that opens a #/weigh link (see app.js weighFromLink).
+function lastRenpho() {
+  let l = null;
+  try { l = JSON.parse(localStorage.getItem("cut.renpho.last")); } catch { /* ignore */ }
+  if (!l) return `<p class="fine"><b>This browser hasn't received a Renpho link yet.</b> If the Shortcut ran, it opened somewhere else (or not at all).</p>`;
+  const when = new Date(l.at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+  return `<p class="fine"><b>Last Renpho link here:</b> ${esc(when)}, ${l.ok ? "logged fine" : "<b>couldn't read a weight</b>"}.</p>
+    <code class="renpho-link">${esc(decodeURIComponent(l.raw.replace(/\+/g, " ")) || "(empty)")}</code>`;
+}
+
 function renpho() {
   const link = `${location.origin}${location.pathname}#/weigh?kg=<b>Weight·Value</b>&amp;unit=<b>Weight·Unit</b>&amp;fat=<b>Body Fat·Value</b>&amp;lean=<b>Lean·Value</b>&amp;at=<b>Weight·Start Date</b>`;
   return `<section class="card renpho">
@@ -237,6 +246,7 @@ function renpho() {
       <li>Add <b>Open URLs</b> with the Text.</li>
       <li><b>Automation</b> tab → New → App → <b>Renpho Health</b> → Is Closed → Run Immediately → your shortcut.</li>
     </ol>
+    ${lastRenpho()}
     <p class="fine">The link opens in Safari, so connect The Cut there once with your setup link. Opening Renpho without weighing just re-sends the last weigh-in for its own date, which is ignored.</p>
   </section>`;
 }

@@ -1,5 +1,5 @@
 // Body maths: age, BMR, calorie & macro targets, weight trend and projections.
-import { addDays, daysBetween, live, parse, today } from "./util.js?v=9";
+import { addDays, daysBetween, live, parse, today } from "./util.js?v=10";
 
 export const DEFAULT_PROFILE = {
   name: "Tom",

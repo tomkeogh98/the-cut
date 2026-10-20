@@ -1,14 +1,14 @@
 // The shell: routing, header (timecode + sync), Hevy auto-sync and milestone celebrations.
-import { live, pad, prettyDate, reducedMotion } from "./util.js?v=9";
-import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=9";
-import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=9";
-import { renderSession, renderToday } from "./view-today.js?v=9";
-import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=9";
-import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=9";
-import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=9";
-import { pullWeights, pullWorkouts } from "./hevy.js?v=9";
-import { readWeighIn } from "./body.js?v=9";
-import { applyGuitar, syncGuitar } from "./guitar.js?v=9";
+import { esc, live, pad, prettyDate, reducedMotion } from "./util.js?v=10";
+import { configured, connectDevice, onboarded, pairLink, profile, readPairCode, setRec, store, syncNow, update } from "./store.js?v=10";
+import { $, $$, celebrate, enter, modal, toast } from "./ui.js?v=10";
+import { renderSession, renderToday } from "./view-today.js?v=10";
+import { renderDailies, renderRushes, renderScope, renderTimeline } from "./view-track.js?v=10";
+import { renderCraft, renderOffice, renderProgram, renderScript } from "./view-plan.js?v=10";
+import { achievedIds, habitGoals, liftGoals, weightMilestones, weightStatus } from "./goals.js?v=10";
+import { pullWeights, pullWorkouts } from "./hevy.js?v=10";
+import { readWeighIn } from "./body.js?v=10";
+import { applyGuitar, syncGuitar } from "./guitar.js?v=10";
 
 const ROUTES = {
   "": renderToday,
@@ -178,19 +178,26 @@ async function pairDevice(code) {
 function weighFromLink(q) {
   history.replaceState(null, "", `${location.pathname}#/scope`);
   const w = readWeighIn(q);
-  if (!w) toast("That weigh-in link had no weight in it. Check the Renpho Shortcut.", "bad");
-  else {
-    const prev = store.state.weights[w.date];
-    const fresh = !live(prev) || prev.kg !== w.kg || (prev.fat ?? null) !== w.fat;
-    if (fresh) {
-      const rec = { kg: w.kg, deleted: false, source: "renpho" };
-      if (w.fat != null) rec.fat = w.fat;
-      if (w.lean != null) rec.lean = w.lean;
-      setRec("weights", w.date, rec);
-    }
-    const what = `${w.kg} kg${w.fat != null ? ` · ${w.fat}% fat` : ""}`;
-    toast(`${fresh ? "Renpho weigh-in logged" : "Already logged"}: ${what}, ${prettyDate(w.date)}.${configured() ? "" : " This browser isn't synced yet: open your setup link here once."}`);
+  // Remember what arrived (this browser only), so a broken Shortcut can be debugged from Settings.
+  try { localStorage.setItem("cut.renpho.last", JSON.stringify({ at: Date.now(), raw: q.toString(), ok: Boolean(w) })); } catch { /* ignore */ }
+  if (!w) {
+    route();
+    view.insertAdjacentHTML("afterbegin", `<section class="card renpho-debug"><h2>The Renpho link didn't work</h2>
+      <p>It arrived, but there was no weight The Cut could read. This is exactly what the Shortcut sent:</p>
+      <code class="renpho-link">${esc(decodeURIComponent(q.toString().replace(/\+/g, " ")) || "(nothing after #/weigh)")}</code>
+      <p class="fine">Usually a Text variable is missing its detail (tap it and pick Value). Screenshot this for Claude if it's not obvious.</p></section>`);
+    return;
   }
+  const prev = store.state.weights[w.date];
+  const fresh = !live(prev) || prev.kg !== w.kg || (prev.fat ?? null) !== w.fat;
+  if (fresh) {
+    const rec = { kg: w.kg, deleted: false, source: "renpho" };
+    if (w.fat != null) rec.fat = w.fat;
+    if (w.lean != null) rec.lean = w.lean;
+    setRec("weights", w.date, rec);
+  }
+  const what = `${w.kg} kg${w.fat != null ? ` · ${w.fat}% fat` : ""}`;
+  toast(`${fresh ? "Renpho weigh-in logged" : "Already logged"}: ${what}, ${prettyDate(w.date)}.${configured() ? "" : " This browser isn't synced yet: open your setup link here once."}`);
   route();
 }
 
