@@ -81,3 +81,11 @@ must(H.weighInFromHevy({ kg: 82.0, fat: 17, lean: 66, updatedAt: 5 }, hm) === nu
 must(H.weighInFromHevy({ kg: 82.0, deleted: true, updatedAt: 5 }, hm) === null, 'deleted day stays deleted');
 must(H.weighInFromHevy(undefined, { kg: 82.4, fat: null, lean: null }).fat === undefined, 'weight-only measurement');
 console.log('hevy weigh-in OK');
+// Lean mass worked out from weight and body fat when Hevy doesn't carry it
+const lm = (c, m) => { if (!c) throw new Error('lean mass: ' + m); };
+lm(B.leanMass(103.1, 19.6) === 82.9 && B.leanMass(103.1, null) === null, 'formula');
+const ser = B.weightSeries({ weights: { '2026-10-20': { kg: 103.100000001, fat: 19.6 }, '2026-10-19': { kg: 103, fat: 20, lean: 81.5 }, '2026-10-18': { kg: 103 } } });
+lm(ser.find((r) => r.date === '2026-10-20').lean === 82.9, 'derived when missing');
+lm(ser.find((r) => r.date === '2026-10-19').lean === 81.5, 'a measured lean mass wins');
+lm(ser.find((r) => r.date === '2026-10-18').lean === null, 'no fat, no lean');
+console.log('lean mass OK');

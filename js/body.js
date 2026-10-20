@@ -1,5 +1,5 @@
 // Body maths: age, BMR, calorie & macro targets, weight trend and projections.
-import { addDays, daysBetween, live, parse, today } from "./util.js?v=14";
+import { addDays, daysBetween, live, parse, today } from "./util.js?v=15";
 
 export const DEFAULT_PROFILE = {
   name: "Tom",
@@ -66,12 +66,14 @@ export function targets(profile, currentKg, on = today()) {
 }
 
 export const bmi = (kgV, cm) => kgV / ((cm / 100) ** 2);
+// Lean mass is everything that isn't fat. Hevy / Apple Health rarely pass it on, so work it out from weight and body fat %.
+export const leanMass = (kgV, fatPct) => (fatPct == null ? null : Math.round(Number(kgV) * (1 - fatPct / 100) * 10) / 10);
 
 // ---------- weight series ----------
 export function weightSeries(state) {
   return Object.entries(state.weights || {})
     .filter(([, w]) => live(w) && w.kg > 0)
-    .map(([date, w]) => ({ date, kg: Number(w.kg), fat: w.fat ?? null, lean: w.lean ?? null }))
+    .map(([date, w]) => ({ date, kg: Number(w.kg), fat: w.fat ?? null, lean: w.lean ?? leanMass(w.kg, w.fat) }))
     .sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
